@@ -36,7 +36,11 @@ tagged `acquisition_channel = WALK_IN`.
                                      ├─► Meta WhatsApp Cloud API (inbound + outbound)
                                      ├─► Razorpay (UPI links + payment webhooks)
                                      ├─► Object storage (voice notes / part photos)
-                                     └─► Firebase Cloud Messaging (push)
+                                     ├─► Firebase Cloud Messaging (push)
+                                     └─► ML service (Python/FastAPI) ──► part-ID model + STT
+                                              ▲
+                                              └── labeled data flows back from every
+                                                  human-resolved order (see §9)
 ```
 
 Single shared database. Every order and user is tagged for audit/analytics (see §5).
@@ -54,6 +58,9 @@ Single shared database. Every order and user is tagged for audit/analytics (see 
 | Media | Local disk (prototype) → **S3 / Cloudflare R2** (prod) | Voice `.ogg`, part/nameplate photos. |
 | Push | **Firebase Cloud Messaging** | Order status → buyer; new order → shop. |
 | Auth | Phone + OTP → **JWT** | Roles: `FARMER`, `MISTRI`, `SHOP_ADMIN`. |
+| **ML service** | **Python + FastAPI** (separate microservice) | Serves part-identification + speech-to-text. Called by the Node backend over HTTP. Kept separate so Python ML tooling stays out of the Node app. See §9. |
+| **Speech-to-text** | Hosted API first (Google STT or self-hosted Whisper) → dialect fine-tune later | Hindi / Bundelkhandi voice notes. Day 1: just store audio for a human. |
+| **Vision model** | Phase 1: off-the-shelf multimodal LLM + catalog RAG → Phase 2: fine-tuned PyTorch classifier (EfficientNet/ViT) | Serves candidate SKUs with confidence. See §9 for phased plan and honest limits. |
 | Hosting (later) | Small VM / container (Railway/Render/EC2) + managed Postgres | Nothing deployed until the WhatsApp loop works locally. |
 
 ## 4. Data model (core tables)
@@ -65,9 +72,12 @@ Single shared database. Every order and user is tagged for audit/analytics (see 
 - **payments** — `id, order_id, razorpay_link_id, amount, status, paid_at`
 - **deliveries** — `id, order_id, bus_route, conductor_name, otp_hash, dispatched_at, claimed_at`
 - **wallet_txns** — `id, mistri_id, order_id, type (CASHBACK|PAYOUT), amount, created_at`
+- **part_predictions** — `id, order_id, model_version, predicted_sku_id, brand, part_category, predicted_specs (jsonb: teeth/splines/diameter…), confidence, input_media_url, transcript, created_at` (what the AI guessed for an order)
+- **training_examples** — `id, media_url, transcript, resolved_sku_id, resolved_specs (jsonb), labeled_by (staff id), source_order_id, split (train|val|test), created_at` (the labeled dataset, built automatically — see §9)
 
 Rules: **OTP stored hashed**, never plaintext. Prices/margins/real client phone numbers
-live in the DB, **never in git**.
+live in the DB, **never in git**. Farmer photos/voice notes used for training require a
+**clear consent notice** at onboarding.
 
 ## 5. Channel & audit tagging
 
@@ -117,7 +127,52 @@ Prove the order → pay → dispatch loop with real money before building the po
 Deferred until the loop works: full catalog matching automation, speech-to-text on Hindi
 voice notes (store audio for a human first), multi-service split, any deployment.
 
-## 9. Guardrails
+**Data capture is NOT deferred.** From the very first order, every photo + voice note +
+the SKU a human resolves it to is written to `training_examples` (§9). The MVP is the
+data-collection engine for the future model — that is its second job.
+
+## 9. Part Identification AI (vision + voice) — the long-term moat
+
+**Goal:** a farmer sends a photo of a broken part (+ optional Hindi voice note); the system
+identifies **brand + part category + key specs** (e.g. teeth count, spline count, diameter),
+maps it to a SKU, and lets the shop fetch and ship it directly — even when the farmer
+doesn't know the part's name.
+
+### Honest scope
+- **Brand + part category from a photo** → achievable with a fine-tuned image classifier.
+- **Fine-grained specs (teeth count, splines, diameter)** → **the hard part.** A casual phone
+  photo has no scale reference, variable lighting/angle, and grease/wear. Realistic tactics:
+  ask for a **reference object in frame** (a coin), request a **second angle**, or keep
+  **human-in-the-loop on specs** until data + accuracy justify automation. We will not
+  promise reliable automated teeth-counting on day one.
+- A **custom trained model is Phase 2+**, gated on having enough labeled data.
+
+### Phased plan
+- **Phase 0 — Human-in-the-loop (MVP, now).** Store photo + voice. Staff identify the part
+  and resolve to a SKU. Every resolution auto-creates a `training_examples` row. *This is
+  how the dataset gets built* — no separate labeling project needed.
+- **Phase 1 — Assisted (off-the-shelf).** A multimodal LLM (vision) + **RAG over the SKU
+  catalog** proposes ranked candidate SKUs with confidence; Hindi voice → STT → structured
+  query merged with the image signal. Staff confirm/correct in the admin inbox; corrections
+  feed the dataset. Low-confidence predictions are routed to staff (active learning).
+- **Phase 2 — Custom model.** Once enough labeled images per class accumulate, fine-tune a
+  PyTorch vision model served by the Python `ml-service`: (a) a **classifier** head for
+  brand + part category; (b) a separate **fine-grained/attribute** approach for specs
+  (object detection / keypoint or measurement-with-reference) tackled only where data
+  supports it. Versioned models (`model_version` on every prediction), offline eval on the
+  held-out `test` split before any model is promoted.
+
+### Data flow
+`order photo + voice → part_predictions (what AI guessed) → staff resolves → resolved SKU +
+specs written to training_examples (the label) → periodic retrain → promote if eval beats
+current model_version`. The human correction *is* the ground-truth label.
+
+### Serving
+`ml-service` (Python/FastAPI) exposes `POST /identify` (image + optional transcript →
+ranked SKU candidates + specs + confidence) and `POST /transcribe` (audio → text). The Node
+backend calls it async via the Redis queue; results attach to the order for staff review.
+
+## 10. Guardrails
 
 - Prototype only, not deployed. Test WhatsApp number, no real payments, no production data.
 - Never commit `.env` / tokens. Keep the father's real shop data (prices, client phones) out of git.
