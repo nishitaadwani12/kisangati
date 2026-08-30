@@ -52,15 +52,15 @@ async function main() {
   console.log(`Seeding demo data → ${BASE}`);
 
   // Shops + login accounts (created directly; login itself needs them to exist first).
-  const shop1 = await db.shop.create({ data: { name: "Adwani Tractor Spares", town: "Jhansi" } });
+  const shop1 = await db.shop.create({ data: { name: "Satram Tractors", town: "Jhansi" } });
   const shop2 = await db.shop.create({ data: { name: "Relative Tractor Parts", town: "Jhansi" } });
   const hash = await bcrypt.hash(PW, 10);
-  await db.adminUser.create({ data: { email: "nishita@kisangati.in", name: "Nishita (network)", passwordHash: hash, role: "SUPER_ADMIN", shopId: null } });
-  await db.adminUser.create({ data: { email: "shop1@kisangati.in", name: "Shop 1 Owner", passwordHash: hash, role: "OWNER", shopId: shop1.id } });
-  await db.adminUser.create({ data: { email: "shop2@kisangati.in", name: "Shop 2 Owner", passwordHash: hash, role: "OWNER", shopId: shop2.id } });
+  await db.adminUser.create({ data: { email: "nishita.kisangati@gmail.com", name: "Nishita (network)", passwordHash: hash, role: "SUPER_ADMIN", shopId: null } });
+  await db.adminUser.create({ data: { email: "satramtractors@gmail.com", name: "Satram Tractors Owner", passwordHash: hash, role: "OWNER", shopId: shop1.id } });
+  await db.adminUser.create({ data: { email: "relativetractors@gmail.com", name: "Relative Shop Owner", passwordHash: hash, role: "OWNER", shopId: shop2.id } });
 
   // ---- Shop 1 (the family shop) ----
-  const t1 = await login("shop1@kisangati.in", PW);
+  const t1 = await login("satramtractors@gmail.com", PW);
   await seedShop(t1,
     [
       { name: "Oil Filter", brand: "Mahindra", modelCompat: "575 DI", category: "LOW", retailPrice: 9000, wholesalePrice: 6000, stockQty: 30 },
@@ -105,7 +105,7 @@ async function main() {
   );
 
   // ---- Shop 2 (relative's shop) — smaller, so isolation is obvious ----
-  const t2 = await login("shop2@kisangati.in", PW);
+  const t2 = await login("relativetractors@gmail.com", PW);
   await seedShop(t2,
     [
       { name: "Air Filter", brand: "Swaraj", modelCompat: "744", category: "LOW", retailPrice: 24000, wholesalePrice: 16000, stockQty: 12 },
@@ -127,9 +127,9 @@ async function main() {
 
   console.log("Done. Shops, accounts, catalog and orders seeded across 2 shops.\n");
   console.log("Login at http://localhost:5173 (password for all: " + PW + "):");
-  console.log("  • nishita@kisangati.in  — SUPER_ADMIN (sees all shops)");
-  console.log("  • shop1@kisangati.in    — Adwani Tractor Spares (Jhansi)");
-  console.log("  • shop2@kisangati.in    — Relative Tractor Parts (Jhansi)");
+  console.log("  • nishita.kisangati@gmail.com  — SUPER_ADMIN (sees all shops)");
+  console.log("  • satramtractors@gmail.com     — Satram Tractors (Jhansi)");
+  console.log("  • relativetractors@gmail.com   — Relative Tractor Parts (Jhansi)");
   await db.$disconnect();
 }
 

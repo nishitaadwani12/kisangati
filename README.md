@@ -44,9 +44,9 @@ login accounts so you can see multi-shop isolation (password for all: `kisan123`
 
 | Email | Role | Sees |
 |---|---|---|
-| `nishita@kisangati.in` | SUPER_ADMIN | all shops (with a shop switcher) |
-| `shop1@kisangati.in` | OWNER | Adwani Tractor Spares only |
-| `shop2@kisangati.in` | OWNER | Relative Tractor Parts only |
+| `nishita.kisangati@gmail.com` | SUPER_ADMIN | all shops (with a shop switcher) |
+| `satramtractors@gmail.com` | OWNER | Satram Tractors only |
+| `relativetractors@gmail.com` | OWNER | Relative Tractor Parts only |
 
 **Before real use, wipe all demo data:**
 
