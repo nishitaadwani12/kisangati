@@ -35,11 +35,14 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 - **[MVP]** Payment status per order (pending / confirmed), with UTR + confirmer visible.
 - **[Later]** Auto-confirm via Razorpay webhook (no manual step) — the stored UTR makes this switch seamless.
 
-### 3. Inventory & catalog
-- **[MVP]** SKU list: brand, model fit, retail price, wholesale cost, weight, **stock count**.
-- **[MVP]** Add / edit SKU; adjust stock.
-- **[MVP]** Low-stock flag.
-- **[Later]** Wholesaler reorder tracking.
+### 3. Catalog (optional — builds organically, no onboarding burden)
+- **[MVP]** No upfront catalog entry or stock counting required. On the order screen, staff **type the part
+  name** and pick from **autocomplete suggestions** of previously-saved parts; only if nothing matches do they
+  create it once (name + price). The catalog thus **populates itself from real orders**.
+- **[MVP]** **Duplicate-proof:** a normalized match-key (case/space/punctuation-insensitive) means `abc-123`
+  and `abc 123` resolve to the same saved part — clean price memory and clean AI training data.
+- **[MVP]** Catalog page for viewing/editing saved parts; two-tier prices (farmer/mistri).
+- **[Optional/Later]** Stock counts + low-stock flag (kept, not required); wholesaler reorder tracking.
 
 ### 4. Dispatch & delivery
 - **[MVP]** Generate **thermal shipping label**: bus route + conductor + 4-digit **OTP**.
@@ -64,6 +67,8 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 - **[Built]** Roles: `OWNER`/`STAFF` (scoped to one shop) and `SUPER_ADMIN` (network-wide, with a shop switcher).
 - **[Built]** Multi-shop isolation: orders, catalog, and customers are scoped by `shopId`; a shop cannot read
   another shop's data (cross-shop access → 404). Customer phone is unique per shop.
+- **[Built]** Controlled onboarding: the super-admin **Shops** page creates a shop + its owner login (no public
+  self-sign-up — shops are vetted).
 - **[Later]** Shop self-sign-up flow, per-shop billing, granular staff permissions.
 
 ## Data touched (see Prisma schema)

@@ -3,6 +3,7 @@ import express, { NextFunction, Request, Response } from "express";
 import { HttpError } from "./lib/http";
 import { authRequired } from "./middleware/auth";
 import { auth } from "./routes/auth";
+import { shops } from "./routes/shops";
 import { orders } from "./routes/orders";
 import { skus } from "./routes/skus";
 import { customers } from "./routes/customers";
@@ -18,6 +19,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/auth", auth); // public (login) + /me (self-guarded)
+app.use("/api/shops", authRequired, shops);
 app.use("/api/orders", authRequired, orders);
 app.use("/api/skus", authRequired, skus);
 app.use("/api/customers", authRequired, customers);

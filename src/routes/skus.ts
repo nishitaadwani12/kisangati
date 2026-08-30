@@ -2,6 +2,7 @@ import { Router, Request } from "express";
 import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
 import { shopFilter, shopIdForCreate } from "../middleware/auth";
+import { normalizeKey } from "../lib/text";
 
 export const skus = Router();
 
@@ -20,15 +21,19 @@ skus.get(
   ah(async (req, res) => {
     const q = (req.query.q as string | undefined)?.trim();
     const lowStock = req.query.lowStock === "true";
+    const nq = q ? normalizeKey(q) : "";
     const list = await db.sku.findMany({
       where: {
         AND: [
           shopWhere(req),
-          q ? { OR: [{ name: { contains: q } }, { brand: { contains: q } }, { modelCompat: { contains: q } }] } : {},
+          q
+            ? { OR: [{ name: { contains: q } }, { brand: { contains: q } }, { modelCompat: { contains: q } }, ...(nq ? [{ matchKey: { contains: nq } }] : [])] }
+            : {},
           lowStock ? { stockQty: { lte: 5 } } : {},
         ],
       },
       orderBy: { name: "asc" },
+      take: 30,
     });
     res.json(list);
   })
@@ -52,9 +57,18 @@ skus.post(
     const wholesalePrice = Number.isInteger(b.wholesalePrice) ? b.wholesalePrice : 0;
     if (b.mistriPrice != null) validateMistriPrice(b.mistriPrice, b.retailPrice, wholesalePrice);
     const shopId = shopIdForCreate(req, b.shopId);
+    const matchKey = normalizeKey(b.name, b.brand, b.modelCompat);
+    if (!matchKey) throw new HttpError(400, "name must contain letters or numbers");
+
+    // Find-or-create: reuse an existing part with the same normalized key in this shop (dedupe),
+    // so "abc-123" and "abc 123" never become two records.
+    const existing = await db.sku.findUnique({ where: { shopId_matchKey: { shopId, matchKey } } });
+    if (existing) return res.status(200).json(existing);
+
     const sku = await db.sku.create({
       data: {
         shopId,
+        matchKey,
         name: b.name,
         brand: b.brand ?? null,
         modelCompat: b.modelCompat ?? null,
@@ -91,6 +105,14 @@ skus.patch(
       const retail = (data.retailPrice as number) ?? existing.retailPrice;
       const wholesale = (data.wholesalePrice as number) ?? existing.wholesalePrice;
       validateMistriPrice(data.mistriPrice as number, retail, wholesale);
+    }
+    // Recompute the dedupe key if identifying fields changed.
+    if ("name" in data || "brand" in data || "modelCompat" in data) {
+      data.matchKey = normalizeKey(
+        (data.name as string) ?? existing.name,
+        (data.brand as string) ?? existing.brand,
+        (data.modelCompat as string) ?? existing.modelCompat
+      );
     }
     const sku = await db.sku.update({ where: { id: req.params.id }, data });
     res.json(sku);

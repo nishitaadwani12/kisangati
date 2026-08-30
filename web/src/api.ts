@@ -28,6 +28,7 @@ async function req<T>(path: string, method = "GET", body?: unknown): Promise<T> 
 
 export type MeUser = { id: string; name: string | null; email: string; role: string; shopId: string | null; shopName: string | null };
 export type Shop = { id: string; name: string; town: string | null };
+export type ShopWithCounts = Shop & { _count: { orders: number; users: number; skus: number } };
 
 export type Customer = {
   id: string;
@@ -97,6 +98,10 @@ export const api = {
   skus: (q?: string) => req<Sku[]>(`/skus${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   createSku: (b: Partial<Sku> & { name: string; retailPrice: number }) => req<Sku>("/skus", "POST", b),
   patchSku: (id: string, b: Partial<Sku>) => req<Sku>(`/skus/${id}`, "PATCH", b),
+
+  shops: () => req<ShopWithCounts[]>("/shops"),
+  createShop: (b: { shopName: string; town?: string; ownerEmail: string; ownerName?: string; password: string }) =>
+    req<{ shop: Shop }>("/shops", "POST", b),
 
   customers: (q?: string) => req<Customer[]>(`/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   createCustomer: (b: { phone: string; name?: string; userType: string; acquisitionChannel: string }) =>

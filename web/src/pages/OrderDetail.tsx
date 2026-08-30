@@ -11,7 +11,6 @@ export function OrderDetail() {
   const { t } = useI18n();
   const { id = "" } = useParams();
   const [order, setOrder] = useState<Order | null>(null);
-  const [skus, setSkus] = useState<Sku[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
@@ -27,7 +26,7 @@ export function OrderDetail() {
         setLines(o.items.map((it) => ({ skuId: it.skuId, name: it.sku?.name || it.skuId, qty: it.qty, unitPriceRupees: it.unitPrice / 100 })));
     } catch (e) { setErr((e as Error).message); }
   };
-  useEffect(() => { load(); api.skus().then(setSkus).catch(() => {}); /* eslint-disable-next-line */ }, [id]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
 
   const act = async (fn: () => Promise<unknown>, okMsg?: string) => {
     setErr(""); setMsg("");
@@ -38,11 +37,10 @@ export function OrderDetail() {
   if (!order) return <div>{err ? <div className="err">{err}</div> : t("loading")}</div>;
 
   const editable = order.status === "RECEIVED" || order.status === "QUOTED";
-  const addLine = (skuId: string) => {
-    const s = skus.find((x) => x.id === skuId);
-    if (!s) return;
+  const addSku = (s: Sku) => {
+    if (lines.some((l) => l.skuId === s.id)) return; // already added
     const price = suggestedPricePaise(s, order.user.userType);
-    setLines([...lines, { skuId: s.id, name: s.name, qty: 1, unitPriceRupees: price / 100 }]);
+    setLines((prev) => [...prev, { skuId: s.id, name: s.name, qty: 1, unitPriceRupees: price / 100 }]);
   };
   const saveItems = () =>
     act(() => api.setItems(id, lines.map((l) => ({ skuId: l.skuId, qty: l.qty, unitPrice: rupeesToPaise(l.unitPriceRupees) }))), t("saveItems"));
@@ -91,13 +89,12 @@ export function OrderDetail() {
           </tbody>
         </table>
         {editable && (
-          <div className="row" style={{ marginTop: 10 }}>
-            <select defaultValue="" onChange={(e) => { addLine(e.target.value); e.currentTarget.value = ""; }}>
-              <option value="" disabled>{t("addPartOption")}</option>
-              {skus.map((s) => <option key={s.id} value={s.id}>{s.name} {s.brand ? `(${s.brand})` : ""} — {rupees(suggestedPricePaise(s, order.user.userType))}</option>)}
-            </select>
-            <button onClick={saveItems} disabled={lines.length === 0}>{t("saveItems")}</button>
-            <span className="muted">{order.user.userType === "MISTRI" ? t("pricesShownMistri") : t("pricesShownFarmer")}</span>
+          <div style={{ marginTop: 10 }}>
+            <PartPicker userType={order.user.userType} onPick={addSku} setErr={setErr} />
+            <div className="row" style={{ marginTop: 10 }}>
+              <button onClick={saveItems} disabled={lines.length === 0}>{t("saveItems")}</button>
+              <span className="muted">{order.user.userType === "MISTRI" ? t("pricesShownMistri") : t("pricesShownFarmer")}</span>
+            </div>
           </div>
         )}
         <div className="spread" style={{ marginTop: 12 }}>
@@ -136,6 +133,69 @@ export function OrderDetail() {
             {order.payment.utr && <> · UTR <code>{order.payment.utr}</code></>}
             {order.payment.confirmedBy && <> · {t("by")} {order.payment.confirmedBy}</>}
           </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Autocomplete against saved parts (reuse to avoid duplicates); create a new one only if nothing matches.
+function PartPicker({ userType, onPick, setErr }: { userType: string; onPick: (s: Sku) => void; setErr: (s: string) => void }) {
+  const { t } = useI18n();
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<Sku[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [farmer, setFarmer] = useState("");
+  const [mistri, setMistri] = useState("");
+
+  useEffect(() => {
+    const query = q.trim();
+    if (!query) { setResults([]); return; }
+    let active = true;
+    api.skus(query).then((r) => active && setResults(r)).catch(() => {});
+    return () => { active = false; };
+  }, [q]);
+
+  const exactish = results.some((r) => r.name.toLowerCase() === q.trim().toLowerCase());
+  const reset = () => { setQ(""); setResults([]); setCreating(false); setFarmer(""); setMistri(""); };
+
+  const create = async () => {
+    setErr("");
+    try {
+      const sku = await api.createSku({
+        name: q.trim(),
+        retailPrice: rupeesToPaise(farmer || 0),
+        mistriPrice: mistri ? rupeesToPaise(mistri) : undefined,
+      });
+      onPick(sku);
+      reset();
+    } catch (e) { setErr((e as Error).message); }
+  };
+
+  return (
+    <div className="picker">
+      <input placeholder={t("partSearch")} value={q} onChange={(e) => { setQ(e.target.value); setCreating(false); }} />
+      {q.trim() && !creating && (
+        <div className="picker-list">
+          {results.map((s) => (
+            <button type="button" key={s.id} className="picker-item" onClick={() => { onPick(s); reset(); }}>
+              <span>{s.name}{s.brand ? ` (${s.brand})` : ""}</span>
+              <span className="muted">{rupees(suggestedPricePaise(s, userType))}</span>
+            </button>
+          ))}
+          {!exactish && (
+            <button type="button" className="picker-item add" onClick={() => setCreating(true)}>
+              {t("addNewNamed", { name: q.trim() })}
+            </button>
+          )}
+        </div>
+      )}
+      {creating && (
+        <div className="row" style={{ marginTop: 8 }}>
+          <div className="field"><label>{t("farmerPrice")}*</label><input type="number" value={farmer} onChange={(e) => setFarmer(e.target.value)} autoFocus /></div>
+          <div className="field"><label>{t("mistriPrice")}</label><input type="number" value={mistri} onChange={(e) => setMistri(e.target.value)} placeholder={t("autoDiscount")} /></div>
+          <button type="button" onClick={create} disabled={!farmer}>{t("save")}</button>
+          <button type="button" className="secondary" onClick={() => setCreating(false)}>{t("cancel")}</button>
         </div>
       )}
     </div>

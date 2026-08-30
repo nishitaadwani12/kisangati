@@ -96,6 +96,7 @@ model Sku {
   id            String  @id @default(cuid())
   shopId        String
   shop          Shop    @relation(fields: [shopId], references: [id])
+  matchKey      String // normalized name+brand+model for duplicate-proof matching within a shop
   name          String
   brand         String?
   modelCompat   String?
@@ -109,6 +110,8 @@ model Sku {
 
   orderItems      OrderItem[]
   partPredictions PartPrediction[]
+
+  @@unique([shopId, matchKey]) // one saved part per normalized name within a shop (dedupe)
 }
 
 model Payment {

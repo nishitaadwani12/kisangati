@@ -73,4 +73,14 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .ok { color: var(--accent); font-size: 13px; margin: 8px 0; }
 .pill { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; font-size: 12px; }
 .otp { font-size: 26px; letter-spacing: 6px; font-weight: 700; color: var(--accent2); }
+
+/* Part autocomplete */
+.picker { position: relative; max-width: 460px; }
+.picker input { width: 100%; }
+.picker-list { border: 1px solid var(--line); border-radius: 8px; margin-top: 4px; overflow: hidden; }
+.picker-item { display: flex; justify-content: space-between; width: 100%; background: #fff; color: var(--ink);
+  border: none; border-bottom: 1px solid var(--line); padding: 9px 12px; text-align: left; border-radius: 0; cursor: pointer; }
+.picker-item:last-child { border-bottom: none; }
+.picker-item:hover { background: var(--bg); }
+.picker-item.add { color: var(--accent); font-weight: 600; }
 code { background: var(--bg); padding: 2px 6px; border-radius: 5px; font-size: 12px; word-break: break-all; }

@@ -24,6 +24,7 @@ export function Layout() {
           <NavLink to="/orders" className={link}>{t("nav.orders")}</NavLink>
           <NavLink to="/catalog" className={link}>{t("nav.catalog")}</NavLink>
           <NavLink to="/customers" className={link}>{t("nav.customers")}</NavLink>
+          {isSuper && <NavLink to="/shops" className={link}>{t("nav.shops")}</NavLink>}
         </nav>
 
         <div className="sidebar-foot">

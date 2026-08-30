@@ -17,6 +17,10 @@ const dict: Record<Lang, Record<string, string>> = {
 
     partsAndPrice: "Parts & price", part: "Part", qty: "Qty", unit: "Unit ₹", line: "Line",
     noPartsMatched: "No parts matched yet.", addPartOption: "+ add part…", saveItems: "Save items",
+    partSearch: "Search or type a part…", addNewNamed: "+ Add new part: “{name}”", save: "Save", cancel: "Cancel",
+    "nav.shops": "Shops", shopsTitle: "Shops", addShop: "Add a shop", shopName: "Shop name", town: "Town",
+    ownerEmail: "Owner email", ownerName: "Owner name", tempPassword: "Temporary password", create: "Create",
+    shopCreated: "Shop created — share the login with the owner.", noShops: "No shops yet.",
     pricesShownMistri: "Prices shown are the mistri rate.", pricesShownFarmer: "Prices shown are the farmer rate.",
     subtotalDelivery: "Subtotal {s} + delivery {d}", totalLabel: "Total {t}",
     quoteAndUpi: "Quote & UPI", generateUpi: "Generate UPI link / QR", quoteSent: "Quote sent — share the UPI QR",
@@ -64,6 +68,10 @@ const dict: Record<Lang, Record<string, string>> = {
 
     partsAndPrice: "पार्ट्स और कीमत", part: "पार्ट", qty: "मात्रा", unit: "प्रति ₹", line: "योग",
     noPartsMatched: "अभी कोई पार्ट नहीं जोड़ा।", addPartOption: "+ पार्ट जोड़ें…", saveItems: "आइटम सेव करें",
+    partSearch: "पार्ट खोजें या टाइप करें…", addNewNamed: "+ नया पार्ट जोड़ें: “{name}”", save: "सेव करें", cancel: "रद्द करें",
+    "nav.shops": "शॉप", shopsTitle: "शॉप", addShop: "शॉप जोड़ें", shopName: "शॉप का नाम", town: "शहर",
+    ownerEmail: "मालिक का ईमेल", ownerName: "मालिक का नाम", tempPassword: "अस्थायी पासवर्ड", create: "बनाएँ",
+    shopCreated: "शॉप बन गई — मालिक को लॉगिन साझा करें।", noShops: "अभी कोई शॉप नहीं।",
     pricesShownMistri: "दिखाई गई कीमतें मिस्त्री रेट हैं।", pricesShownFarmer: "दिखाई गई कीमतें किसान रेट हैं।",
     subtotalDelivery: "उप-योग {s} + डिलीवरी {d}", totalLabel: "कुल {t}",
     quoteAndUpi: "कोटेशन और UPI", generateUpi: "UPI लिंक / QR बनाएँ", quoteSent: "कोटेशन भेजा — UPI QR साझा करें",
