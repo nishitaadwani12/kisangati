@@ -11,6 +11,9 @@ a:hover { text-decoration: underline; }
 .sidebar { width: 210px; background: #12332a; color: #dfeee7; padding: 18px 14px; }
 .sidebar h1 { font-size: 20px; margin: 0 0 2px; color: #fff; }
 .sidebar .tag { font-size: 11px; color: #9fc5b4; }
+.langtoggle { margin-top: 14px; display: inline-flex; border: 1px solid #2f5a4b; border-radius: 7px; overflow: hidden; }
+.langtoggle button { background: transparent; color: #cfe6db; border: none; padding: 5px 12px; font-size: 13px; border-radius: 0; }
+.langtoggle button.on { background: #1f7a4d; color: #fff; }
 .sidebar nav { margin-top: 22px; display: flex; flex-direction: column; gap: 4px; }
 .sidebar nav a { color: #dfeee7; padding: 9px 10px; border-radius: 7px; font-size: 14px; }
 .sidebar nav a.active { background: #1f7a4d; color: #fff; }

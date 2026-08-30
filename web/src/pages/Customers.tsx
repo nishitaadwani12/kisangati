@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { api, Customer } from "../api";
 import { rupees } from "../format";
+import { useI18n } from "../i18n";
 
 export function Customers() {
+  const { t } = useI18n();
   const [list, setList] = useState<Customer[]>([]);
   const [q, setQ] = useState("");
   const [err, setErr] = useState("");
@@ -16,7 +18,7 @@ export function Customers() {
     setErr(""); setMsg("");
     try {
       await api.createCustomer({ phone: form.phone.trim(), name: form.name.trim() || undefined, userType: form.userType, acquisitionChannel: form.acquisitionChannel });
-      setMsg("Customer added — introduce both the app and WhatsApp at the counter.");
+      setMsg(t("customerAdded"));
       setForm({ phone: "", name: "", userType: "FARMER", acquisitionChannel: "WALK_IN" });
       load();
     } catch (e) { setErr((e as Error).message); }
@@ -24,45 +26,45 @@ export function Customers() {
 
   return (
     <div>
-      <h2>Customers</h2>
+      <h2>{t("customers")}</h2>
       {err && <div className="err">{err}</div>}
       {msg && <div className="ok">{msg}</div>}
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Onboard a customer (walk-in)</h3>
+        <h3 style={{ marginTop: 0 }}>{t("onboardWalkin")}</h3>
         <div className="row">
-          <div className="field"><label>Phone*</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+9198…" /></div>
-          <div className="field"><label>Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-          <div className="field"><label>Type</label>
+          <div className="field"><label>{t("phone")}*</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+9198…" /></div>
+          <div className="field"><label>{t("name")}</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+          <div className="field"><label>{t("type")}</label>
             <select value={form.userType} onChange={(e) => setForm({ ...form, userType: e.target.value })}>
-              <option>FARMER</option><option>MISTRI</option>
+              <option value="FARMER">{t("type.FARMER")}</option><option value="MISTRI">{t("type.MISTRI")}</option>
             </select>
           </div>
-          <div className="field"><label>Channel</label>
+          <div className="field"><label>{t("channel")}</label>
             <select value={form.acquisitionChannel} onChange={(e) => setForm({ ...form, acquisitionChannel: e.target.value })}>
               <option>WALK_IN</option><option>WHATSAPP</option><option>MISTRI_REFERRAL</option><option>APP</option>
             </select>
           </div>
-          <button onClick={create} disabled={!form.phone}>Add</button>
+          <button onClick={create} disabled={!form.phone}>{t("add")}</button>
         </div>
       </div>
 
       <div className="card">
         <div className="row" style={{ marginBottom: 10 }}>
-          <input placeholder="Search by name or phone…" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} />
-          <button className="secondary" onClick={load}>Search</button>
+          <input placeholder={t("searchNamePhone")} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} />
+          <button className="secondary" onClick={load}>{t("search")}</button>
         </div>
         <table>
-          <thead><tr><th>Name</th><th>Phone</th><th>Type</th><th>Channel</th><th>Orders</th><th>Wallet</th></tr></thead>
+          <thead><tr><th>{t("name")}</th><th>{t("phone")}</th><th>{t("type")}</th><th>{t("channel")}</th><th>{t("ordersCol")}</th><th>{t("wallet")}</th></tr></thead>
           <tbody>
             {list.map((c) => (
               <tr key={c.id}>
-                <td>{c.name || "—"}</td><td>{c.phone}</td><td>{c.userType}</td><td>{c.acquisitionChannel}</td>
+                <td>{c.name || "—"}</td><td>{c.phone}</td><td>{t(`type.${c.userType}`)}</td><td>{c.acquisitionChannel}</td>
                 <td>{c._count?.orders ?? 0}</td>
                 <td>{c.userType === "MISTRI" ? rupees(c.walletBalance) : "—"}</td>
               </tr>
             ))}
-            {list.length === 0 && <tr><td colSpan={6} className="muted">No customers yet.</td></tr>}
+            {list.length === 0 && <tr><td colSpan={6} className="muted">{t("noCustomers")}</td></tr>}
           </tbody>
         </table>
       </div>

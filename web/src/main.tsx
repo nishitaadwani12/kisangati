@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./styles.css";
+import { LangProvider } from "./i18n";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
 import { Orders } from "./pages/Orders";
@@ -25,6 +26,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <LangProvider>
+      <RouterProvider router={router} />
+    </LangProvider>
   </React.StrictMode>
 );

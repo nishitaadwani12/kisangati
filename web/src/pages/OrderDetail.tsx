@@ -3,10 +3,12 @@ import { useParams, Link } from "react-router-dom";
 import { api, Order, Sku } from "../api";
 import { rupees, rupeesToPaise, when, suggestedPricePaise } from "../format";
 import { Badge } from "../components/Layout";
+import { useI18n } from "../i18n";
 
 type Line = { skuId: string; name: string; qty: number; unitPriceRupees: number };
 
 export function OrderDetail() {
+  const { t } = useI18n();
   const { id = "" } = useParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [skus, setSkus] = useState<Sku[]>([]);
@@ -33,23 +35,22 @@ export function OrderDetail() {
     catch (e) { setErr((e as Error).message); }
   };
 
-  if (!order) return <div>{err ? <div className="err">{err}</div> : "Loading…"}</div>;
+  if (!order) return <div>{err ? <div className="err">{err}</div> : t("loading")}</div>;
 
   const editable = order.status === "RECEIVED" || order.status === "QUOTED";
   const addLine = (skuId: string) => {
     const s = skus.find((x) => x.id === skuId);
     if (!s) return;
-    // Default the unit price by the customer's type (farmer vs mistri). Staff can still override.
     const price = suggestedPricePaise(s, order.user.userType);
     setLines([...lines, { skuId: s.id, name: s.name, qty: 1, unitPriceRupees: price / 100 }]);
   };
   const saveItems = () =>
-    act(() => api.setItems(id, lines.map((l) => ({ skuId: l.skuId, qty: l.qty, unitPrice: rupeesToPaise(l.unitPriceRupees) }))), "Items saved");
+    act(() => api.setItems(id, lines.map((l) => ({ skuId: l.skuId, qty: l.qty, unitPrice: rupeesToPaise(l.unitPriceRupees) }))), t("saveItems"));
 
   return (
     <div>
       <div className="spread">
-        <h2><Link to="/orders">Orders</Link> / {order.id.slice(-6)}</h2>
+        <h2><Link to="/orders">{t("orders")}</Link> / {order.id.slice(-6)}</h2>
         <Badge status={order.status} />
       </div>
       {err && <div className="err">{err}</div>}
@@ -58,8 +59,8 @@ export function OrderDetail() {
       <div className="card">
         <div className="spread">
           <div>
-            <strong>{order.user.name || order.user.phone}</strong> <span className="muted">({order.user.userType})</span><br />
-            <span className="muted">{order.user.phone} · via {order.orderSource} · {when(order.createdAt)}</span>
+            <strong>{order.user.name || order.user.phone}</strong> <span className="muted">({t(`type.${order.user.userType}`)})</span><br />
+            <span className="muted">{order.user.phone} · {order.orderSource} · {when(order.createdAt)}</span>
           </div>
           {order.tractorBrand && <span className="pill">{order.tractorBrand} {order.model}</span>}
         </div>
@@ -71,9 +72,9 @@ export function OrderDetail() {
 
       {/* Items */}
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>Parts &amp; price</h3>
+        <h3 style={{ marginTop: 0 }}>{t("partsAndPrice")}</h3>
         <table>
-          <thead><tr><th>Part</th><th>Qty</th><th>Unit ₹</th><th>Line</th>{editable && <th></th>}</tr></thead>
+          <thead><tr><th>{t("part")}</th><th>{t("qty")}</th><th>{t("unit")}</th><th>{t("line")}</th>{editable && <th></th>}</tr></thead>
           <tbody>
             {lines.map((l, i) => (
               <tr key={i}>
@@ -86,33 +87,32 @@ export function OrderDetail() {
                 {editable && <td><button className="secondary" onClick={() => setLines(lines.filter((_, j) => j !== i))}>✕</button></td>}
               </tr>
             ))}
-            {lines.length === 0 && <tr><td colSpan={5} className="muted">No parts matched yet.</td></tr>}
+            {lines.length === 0 && <tr><td colSpan={5} className="muted">{t("noPartsMatched")}</td></tr>}
           </tbody>
         </table>
         {editable && (
           <div className="row" style={{ marginTop: 10 }}>
             <select defaultValue="" onChange={(e) => { addLine(e.target.value); e.currentTarget.value = ""; }}>
-              <option value="" disabled>+ add part…</option>
+              <option value="" disabled>{t("addPartOption")}</option>
               {skus.map((s) => <option key={s.id} value={s.id}>{s.name} {s.brand ? `(${s.brand})` : ""} — {rupees(suggestedPricePaise(s, order.user.userType))}</option>)}
             </select>
-            <button onClick={saveItems} disabled={lines.length === 0}>Save items</button>
-            <span className="muted">Prices shown are the {order.user.userType === "MISTRI" ? "mistri" : "farmer"} rate.</span>
+            <button onClick={saveItems} disabled={lines.length === 0}>{t("saveItems")}</button>
+            <span className="muted">{order.user.userType === "MISTRI" ? t("pricesShownMistri") : t("pricesShownFarmer")}</span>
           </div>
         )}
         <div className="spread" style={{ marginTop: 12 }}>
-          <span className="muted">Subtotal {rupees(order.subtotal)} + delivery {rupees(order.deliveryFee)}</span>
-          <strong>Total {rupees(order.total)}</strong>
+          <span className="muted">{t("subtotalDelivery", { s: rupees(order.subtotal), d: rupees(order.deliveryFee) })}</span>
+          <strong>{t("totalLabel", { t: rupees(order.total) })}</strong>
         </div>
       </div>
 
-      {/* Workflow actions by status */}
       {(order.status === "RECEIVED" || order.status === "QUOTED") && order.total > 0 && (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Quote &amp; UPI</h3>
-          <button onClick={() => act(async () => { const r = await api.quote(id); setUpiLink(r.upiLink); }, "Quote sent — share the UPI QR")}>
-            Generate UPI link / QR
+          <h3 style={{ marginTop: 0 }}>{t("quoteAndUpi")}</h3>
+          <button onClick={() => act(async () => { const r = await api.quote(id); setUpiLink(r.upiLink); }, t("quoteSent"))}>
+            {t("generateUpi")}
           </button>
-          {upiLink && <p style={{ marginTop: 10 }}>Send this to the customer: <br /><code>{upiLink}</code></p>}
+          {upiLink && <p style={{ marginTop: 10 }}>{t("sendToCustomer")} <br /><code>{upiLink}</code></p>}
         </div>
       )}
 
@@ -122,19 +122,19 @@ export function OrderDetail() {
 
       {order.status === "DISPATCHED" && (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Confirm delivery (OTP)</h3>
-          {order.delivery && <p className="muted">On bus {order.delivery.busRoute} · conductor {order.delivery.conductorName}</p>}
+          <h3 style={{ marginTop: 0 }}>{t("confirmDeliveryOtp")}</h3>
+          {order.delivery && <p className="muted">{t("onBusConductor", { route: order.delivery.busRoute || "", name: order.delivery.conductorName || "" })}</p>}
           <DeliverForm id={id} onDone={load} setErr={setErr} setMsg={setMsg} />
         </div>
       )}
 
       {order.payment && (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>Payment</h3>
+          <h3 style={{ marginTop: 0 }}>{t("payment")}</h3>
           <p className="muted">
             {order.payment.method} · {order.payment.status}
             {order.payment.utr && <> · UTR <code>{order.payment.utr}</code></>}
-            {order.payment.confirmedBy && <> · by {order.payment.confirmedBy}</>}
+            {order.payment.confirmedBy && <> · {t("by")} {order.payment.confirmedBy}</>}
           </p>
         </div>
       )}
@@ -143,55 +143,58 @@ export function OrderDetail() {
 }
 
 function ConfirmPayment({ id, onDone, setErr, setMsg }: { id: string; onDone: () => void; setErr: (s: string) => void; setMsg: (s: string) => void }) {
+  const { t } = useI18n();
   const [utr, setUtr] = useState("");
   const [by, setBy] = useState("");
   return (
     <div className="card">
-      <h3 style={{ marginTop: 0 }}>Confirm payment received</h3>
-      <p className="muted">Verify the amount actually landed in your UPI app, then enter the UPI reference (UTR). A screenshot is not proof.</p>
+      <h3 style={{ marginTop: 0 }}>{t("confirmPaymentReceived")}</h3>
+      <p className="muted">{t("verifyPaymentMsg")}</p>
       <div className="row">
-        <div className="field"><label>UTR / UPI ref</label><input value={utr} onChange={(e) => setUtr(e.target.value)} placeholder="e.g. 412345678901" /></div>
-        <div className="field"><label>Confirmed by</label><input value={by} onChange={(e) => setBy(e.target.value)} placeholder="your name" /></div>
+        <div className="field"><label>{t("utrLabel")}</label><input value={utr} onChange={(e) => setUtr(e.target.value)} placeholder="e.g. 412345678901" /></div>
+        <div className="field"><label>{t("confirmedByLabel")}</label><input value={by} onChange={(e) => setBy(e.target.value)} placeholder={t("yourName")} /></div>
         <button onClick={async () => {
           setErr(""); setMsg("");
-          try { await api.confirmPayment(id, utr.trim(), by.trim() || "staff"); setMsg("Payment confirmed"); onDone(); }
+          try { await api.confirmPayment(id, utr.trim(), by.trim() || "staff"); setMsg(t("paymentConfirmed")); onDone(); }
           catch (e) { setErr((e as Error).message); }
-        }}>Mark paid</button>
+        }}>{t("markPaid")}</button>
       </div>
     </div>
   );
 }
 
 function Dispatch({ id, onDone, setErr, setOtp, otp }: { id: string; onDone: () => void; setErr: (s: string) => void; setOtp: (s: string) => void; otp: string }) {
+  const { t } = useI18n();
   const [route, setRoute] = useState("");
   const [conductor, setConductor] = useState("");
   return (
     <div className="card">
-      <h3 style={{ marginTop: 0 }}>Dispatch on bus</h3>
+      <h3 style={{ marginTop: 0 }}>{t("dispatchOnBus")}</h3>
       <div className="row">
-        <div className="field"><label>Bus route</label><input value={route} onChange={(e) => setRoute(e.target.value)} placeholder="Jhansi–Mauranipur" /></div>
-        <div className="field"><label>Conductor</label><input value={conductor} onChange={(e) => setConductor(e.target.value)} /></div>
+        <div className="field"><label>{t("busRoute")}</label><input value={route} onChange={(e) => setRoute(e.target.value)} placeholder="Jhansi–Mauranipur" /></div>
+        <div className="field"><label>{t("conductor")}</label><input value={conductor} onChange={(e) => setConductor(e.target.value)} /></div>
         <button className="warn" onClick={async () => {
           setErr("");
           try { const r = await api.dispatch(id, route.trim(), conductor.trim()); setOtp(r.otp); onDone(); }
           catch (e) { setErr((e as Error).message); }
-        }}>Dispatch &amp; generate OTP</button>
+        }}>{t("dispatchGenerateOtp")}</button>
       </div>
-      {otp && <p style={{ marginTop: 12 }}>Give this OTP to the customer (they show it at the bus stop):<br /><span className="otp">{otp}</span></p>}
+      {otp && <p style={{ marginTop: 12 }}>{t("giveOtp")}<br /><span className="otp">{otp}</span></p>}
     </div>
   );
 }
 
 function DeliverForm({ id, onDone, setErr, setMsg }: { id: string; onDone: () => void; setErr: (s: string) => void; setMsg: (s: string) => void }) {
+  const { t } = useI18n();
   const [otp, setOtp] = useState("");
   return (
     <div className="row">
-      <div className="field"><label>OTP from customer</label><input value={otp} onChange={(e) => setOtp(e.target.value)} /></div>
+      <div className="field"><label>{t("otpFromCustomer")}</label><input value={otp} onChange={(e) => setOtp(e.target.value)} /></div>
       <button onClick={async () => {
         setErr(""); setMsg("");
-        try { const r = await api.deliver(id, otp.trim()); setMsg(r.cashbackPaise > 0 ? `Delivered ✓ · mistri cashback ${rupees(r.cashbackPaise)}` : "Delivered ✓"); onDone(); }
+        try { const r = await api.deliver(id, otp.trim()); setMsg(r.cashbackPaise > 0 ? t("deliveredCashback", { amt: rupees(r.cashbackPaise) }) : t("deliveredOk")); onDone(); }
         catch (e) { setErr((e as Error).message); }
-      }}>Confirm delivered</button>
+      }}>{t("confirmDelivered")}</button>
     </div>
   );
 }
