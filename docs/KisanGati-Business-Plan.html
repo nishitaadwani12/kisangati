@@ -231,16 +231,16 @@ combines them for agricultural machinery.</p>
 
 <h2>9. Business model &amp; financials</h2>
 
-<div class="callout warn">
-  <strong>Status:</strong> the benchmark data and modeling framework below are final. The last
-  research input — <strong>actual part prices, gross margin, and India/UP market size</strong> — is still
-  being gathered; once it lands, the <strong>Year 1–5 revenue projection</strong> and the two rows marked
-  <em>[pending]</em> will be filled in and the PDF rendered. Everything else here is ready to review.
+<div class="callout">
+  <strong>Note on the numbers:</strong> the projection below is anchored to the shop's <em>real</em> current
+  volume (~5 orders/day) and to researched part prices, margins, and market size. It is a planning estimate,
+  not a promise — the honest caveats are listed under each table. Please pressure-test the assumptions
+  (AOV, margin, and how fast orders can realistically grow) against your own experience.
 </div>
 
 <h3>9.1 How the money is made</h3>
 <ul>
-  <li><strong>Part margin</strong> — the spread between wholesale cost and retail price (the shop's existing margin). <span class="tag">[pending exact %]</span></li>
+  <li><strong>Part margin</strong> — the spread between wholesale cost and retail price (the shop's existing margin), researched at ~15–25% for genuine/OEM and higher on aftermarket/consumables.</li>
   <li><strong>Delivery fee</strong> — a small flat fee on smaller orders (bus delivery cost is low), waived above a threshold.</li>
   <li><strong>Later:</strong> mistri-services commission (Phase 3) and a platform fee from other shops that join (Phase 3).</li>
 </ul>
@@ -252,8 +252,8 @@ combines them for agricultural machinery.</p>
   <li><strong>Margins are structurally thin sector-wide.</strong> B2B agri take-rates run ~3–5%; players survive on volume, repeat buyers, and private label — not on fat per-order profit. KisanGati's advantage is that it rides an <em>existing</em> shop's real part margin and a near-free bus last-mile, so its per-order economics can be healthier than pure-play startups.</li>
 </ul>
 <p class="muted">Note: tractor spare-parts order values are <strong>not published anywhere</strong> — no
-competitor or report discloses them. So AOV and margin must come from the father's real prices (the pending
-input), not from the market. That is expected and fine.</p>
+competitor or report discloses them. So the AOV and margin below are built bottom-up from researched part
+prices and retail margins; the father can refine them with his real prices to sharpen the projection.</p>
 
 <h3>9.3 Benchmark table (used to build the projection)</h3>
 <table>
@@ -261,19 +261,62 @@ input), not from the market. That is expected and fine.</p>
   <tr><td>WhatsApp message → order conversion</td><td>Real large-sample data ~3–7% for broadcasts (GoKwik, RichAutomate). Vendor claims of 45%+ are unreliable and rejected.</td><td>Warm/opted-in intake (a farmer messaging to order) converts far higher than a cold broadcast — we model responded-enquiry → order at a healthy rate, cold outreach at 3–7%.</td></tr>
   <tr><td>Payment cost</td><td>UPI person-to-merchant MDR is <strong>zero</strong> by RBI rule; gateway list rate ~2%+GST only if we later use one.</td><td>~₹0 now (manual UPI); ~2% only if/when a gateway is added.</td></tr>
   <tr><td>Last-mile cost</td><td>Formal rural courier ≈ ₹60–130/parcel. Informal bus/rail parcel ≈ ₹5–30/kg (depot-to-depot).</td><td>Bus tie-up keeps our delivery cost near the low end — a real structural edge vs courier-based rivals.</td></tr>
-  <tr><td>Gross part margin</td><td>Retailer spread (retail-only shop) — <span class="tag">[pending]</span></td><td>[pending] — anchored to researched retail-margin ranges, modeled as a band.</td></tr>
-  <tr><td>Average order value (AOV)</td><td>Not published for parts; rural e-comm AOV ≈ ₹150–300 as a floor reference only. The shop is <strong>retail-only (no wholesale)</strong> and client prices vary widely order to order.</td><td>[pending] — anchored to researched part-price ranges, modeled as a Low/Base/High <em>band</em> rather than a single number, because real prices genuinely vary.</td></tr>
+  <tr><td>Gross part margin</td><td>Indian parts retail runs <strong>15–45%</strong> by channel (authorized dealer 15–25%; multi-brand/local 25–45%); genuine/OEM lower, aftermarket &amp; consumables higher. <span class="muted">[Ride N Repair 2026 — proxy, not tractor-specific]</span></td><td><strong>15% / 20% / 25%</strong> (Low / Base / High).</td></tr>
+  <tr><td>Average order value (AOV)</td><td>Not published for parts (retail-only shop, widely varying prices). Built bottom-up from IndiaMart retail ranges × order mix: filters/belts/seals ₹80–800, clutch/pump/brake ₹350–5,800, pumps/injectors/gears ₹1,800–35,000.</td><td><strong>₹1,200 / ₹1,800 / ₹2,500</strong> (Low / Base / High), from a ~50/35/15 low/med/high mix.</td></tr>
   <tr><td>Growth pattern</td><td>Rural players scaled order volume fast when density was reached (Ninjacart 60→5,000 orders/day) but several contracted when they over-extended (ElasticRun −49%).</td><td>Grow route-by-route from Jhansi; don't over-expand. Model conservative month-on-month order growth.</td></tr>
   <tr><td><strong>Current shop baseline</strong></td><td><strong>Real data (family):</strong> ~4–6 phone orders/day today on the call → UPI → bus-dispatch flow (≈1,200–1,800 remote orders/yr at ~300 working days); ~6,000–8,000 total customers/yr, mostly counter walk-ins; daily callers are almost all farmers, not mistris.</td><td>Year-1 starts from the ~5/day already-working remote base — no cold start. The 6–8k walk-ins are the pool to migrate onto WhatsApp/app.</td></tr>
 </table>
 
 <h3>9.4 Year 1–5 revenue projection</h3>
-<div class="callout" id="projection-pending">
-  <strong>[ Pending only the AOV &amp; gross-margin input ]</strong> — the volume base is now known
-  (~4–6 orders/day today, ~6–8k customers/yr). The Low / Base / High projection will multiply grown order
-  volume × real AOV × gross margin, minus near-zero payment cost and low bus last-mile cost. Only the AOV
-  and margin (from the father's price list / pricing research) are still needed; everything else is set.
+<p>Three scenarios. Each bundles its own order growth, AOV, and margin. <strong>Working days ≈ 300/yr.</strong>
+"Sales value" = total rupees of parts flowing through (GMV). "Gross profit" = the shop's earning after
+wholesale cost, <em>before</em> operating costs. Starting point is the shop's real ~5 orders/day today.</p>
+
+<table>
+  <tr><th>Scenario</th><th></th><th>Year 1</th><th>Year 2</th><th>Year 3</th><th>Year 4</th><th>Year 5</th></tr>
+  <tr><td rowspan="3"><strong>Base</strong><br><span class="muted">AOV ₹1,800 · 20% margin</span></td>
+      <td>orders/day</td><td>6</td><td>10</td><td>15</td><td>22</td><td>30</td></tr>
+  <tr><td>sales value</td><td>₹32.4 L</td><td>₹54 L</td><td>₹81 L</td><td>₹1.19 Cr</td><td>₹1.62 Cr</td></tr>
+  <tr><td>gross profit</td><td>₹6.5 L</td><td>₹10.8 L</td><td>₹16.2 L</td><td>₹23.8 L</td><td>₹32.4 L</td></tr>
+
+  <tr><td rowspan="3"><strong>Low</strong><br><span class="muted">AOV ₹1,200 · 15% margin</span></td>
+      <td>orders/day</td><td>5</td><td>7</td><td>9</td><td>12</td><td>15</td></tr>
+  <tr><td>sales value</td><td>₹18 L</td><td>₹25.2 L</td><td>₹32.4 L</td><td>₹43.2 L</td><td>₹54 L</td></tr>
+  <tr><td>gross profit</td><td>₹2.7 L</td><td>₹3.8 L</td><td>₹4.9 L</td><td>₹6.5 L</td><td>₹8.1 L</td></tr>
+
+  <tr><td rowspan="3"><strong>High</strong><br><span class="muted">AOV ₹2,500 · 25% margin</span></td>
+      <td>orders/day</td><td>8</td><td>15</td><td>28</td><td>45</td><td>70</td></tr>
+  <tr><td>sales value</td><td>₹60 L</td><td>₹1.13 Cr</td><td>₹2.1 Cr</td><td>₹3.38 Cr</td><td>₹5.25 Cr</td></tr>
+  <tr><td>gross profit</td><td>₹15 L</td><td>₹28.1 L</td><td>₹52.5 L</td><td>₹84.4 L</td><td>₹1.31 Cr</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Reading these numbers honestly:</strong>
+  <ul style="margin-bottom:0;">
+    <li><strong>Gross profit is not take-home profit.</strong> Subtract operating costs — but the shop's rent,
+      staff, and supplier relationships <em>already exist</em>, so KisanGati's <em>added</em> costs are mainly
+      technology, packaging, and mistri cashback. That's the advantage of digitizing an existing business vs
+      starting one.</li>
+    <li><strong>Payment cost ≈ ₹0</strong> (UPI merchant MDR is zero by RBI rule) and <strong>delivery stays
+      cheap</strong> (existing bus tie-ups vs ₹60–130 courier), so little leaks out per order.</li>
+    <li><strong>Base is deliberately modest</strong> — roughly 6× today's volume by Year 5, from one shop
+      expanding route-by-route. High assumes strong app adoption + more villages; Low assumes slow uptake.</li>
+    <li>Mistri cashback (3–5% on app orders) and the Phase-3 services/platform fees are upside <em>not</em>
+      included above.</li>
+  </ul>
 </div>
+
+<h3>9.5 Market size — is there room to grow?</h3>
+<p>Yes, comfortably. Even the High case is a rounding error against the addressable market:</p>
+<ul>
+  <li><strong>Uttar Pradesh is India's #1 tractor market</strong> — ~140,000 new tractors sold/yr (~14–18% of national). <span class="muted">[Kotak/TractorGyan/Mordor, FY25]</span></li>
+  <li><strong>Each tractor spends ~₹25,000–75,000/yr on parts &amp; maintenance</strong> (40–45 HP class, excl. tyres). <span class="muted">[TractorGyan, HARD]</span></li>
+  <li><strong>Illustration:</strong> if the Jhansi/Bundelkhand catchment has even ~50,000 working tractors, that's roughly <strong>₹150–350 crore/yr</strong> of local parts spend. KisanGati's Year-5 <em>Base</em> sales (₹1.6 Cr) is well under 1% of that — the ceiling is not the constraint; execution and trust are. <span class="muted">[EST — no Bundelkhand-specific tractor count exists in public data]</span></li>
+  <li><strong>Tailwind:</strong> western UP/Punjab/Haryana are &gt;90% mechanized, but eastern UP &amp; Bundelkhand are less saturated — headroom as mechanization rises. <span class="muted">[Mordor, HARD]</span></li>
+</ul>
+<p class="muted">Data caveats: tractor-market reports diverge 2–5× (ranges used); margins &amp; service intervals are
+auto-parts proxies, not tractor-OEM-published; the ₹25k–75k/tractor spend and UP share are the firmest
+figures. The projection is anchored to the shop's <em>real</em> current volume, not to these market totals.</p>
 
 <h2>10. Technology &amp; how we build it</h2>
 <table>
