@@ -1,0 +1,142 @@
+// KisanGati data layer.
+// Day-1 uses SQLite (see DATABASE_URL in .env). Enum-like columns are String and JSON columns are
+// String (serialized) for SQLite portability; switching to PostgreSQL later can promote these to
+// native enums / jsonb with minimal churn. Allowed values are documented in comments per field.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  phone              String   @unique
+  name               String?
+  userType           String // FARMER | MISTRI
+  acquisitionChannel String // WALK_IN | WHATSAPP | MISTRI_REFERRAL | APP
+  referredByMistriId String?
+  referredByMistri   User?    @relation("MistriReferrals", fields: [referredByMistriId], references: [id])
+  referrals          User[]   @relation("MistriReferrals")
+  walletBalance      Int      @default(0) // paise
+  createdAt          DateTime @default(now())
+
+  orders      Order[]
+  walletTxns  WalletTxn[] @relation("MistriWallet")
+}
+
+model Order {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  orderSource  String // WHATSAPP | APP | COUNTER
+  rawText      String?
+  mediaUrl     String?
+  tractorBrand String?
+  model        String?
+  status       String   @default("RECEIVED") // RECEIVED|QUOTED|PAID|PACKED|DISPATCHED|DELIVERED|CANCELLED
+  cancelReason String?
+  subtotal     Int      @default(0) // paise
+  deliveryFee  Int      @default(0) // paise
+  total        Int      @default(0) // paise
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items           OrderItem[]
+  payment         Payment?
+  delivery        Delivery?
+  walletTxns      WalletTxn[]
+  partPredictions PartPrediction[]
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  skuId     String
+  sku       Sku    @relation(fields: [skuId], references: [id])
+  qty       Int    @default(1)
+  unitPrice Int // paise
+}
+
+model Sku {
+  id            String  @id @default(cuid())
+  name          String
+  brand         String?
+  modelCompat   String?
+  category      String? // LOW | MEDIUM | HIGH (ticket tier) — informational
+  retailPrice   Int // paise
+  wholesalePrice Int    @default(0) // paise
+  weightG       Int     @default(0)
+  stockQty      Int     @default(0)
+  createdAt     DateTime @default(now())
+
+  orderItems      OrderItem[]
+  partPredictions PartPrediction[]
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  orderId     String    @unique
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method      String    @default("MANUAL_UPI_QR") // MANUAL_UPI_QR | RAZORPAY
+  providerRef String? // razorpay link/QR id (later)
+  amount      Int // paise
+  status      String    @default("PENDING") // PENDING | CONFIRMED
+  confirmedBy String? // staff id (manual confirm)
+  confirmedAt DateTime?
+  paidAt      DateTime?
+}
+
+model Delivery {
+  id           String    @id @default(cuid())
+  orderId      String    @unique
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  busRoute     String?
+  conductorName String?
+  otpHash      String? // 4-digit OTP, hashed — never plaintext
+  dispatchedAt DateTime?
+  claimedAt    DateTime?
+}
+
+model WalletTxn {
+  id        String   @id @default(cuid())
+  mistriId  String
+  mistri    User     @relation("MistriWallet", fields: [mistriId], references: [id])
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+  type      String // CASHBACK | PAYOUT
+  amount    Int // paise
+  createdAt DateTime @default(now())
+}
+
+model PartPrediction {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  modelVersion  String?
+  predictedSkuId String?
+  predictedSku  Sku?     @relation(fields: [predictedSkuId], references: [id])
+  brand         String?
+  partCategory  String?
+  predictedSpecs String? // JSON string (teeth/splines/diameter…) — jsonb later
+  confidence    Float?
+  inputMediaUrl String?
+  transcript    String?
+  createdAt     DateTime @default(now())
+}
+
+model TrainingExample {
+  id            String   @id @default(cuid())
+  mediaUrl      String?
+  transcript    String?
+  resolvedSkuId String?
+  resolvedSpecs String? // JSON string — jsonb later
+  labeledBy     String? // staff id
+  sourceOrderId String?
+  split         String   @default("train") // train | val | test
+  createdAt     DateTime @default(now())
+}
