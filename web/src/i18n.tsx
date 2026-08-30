@@ -44,6 +44,7 @@ const dict: Record<Lang, Record<string, string>> = {
     noCustomers: "No customers yet.",
 
     signIn: "Sign in", email: "Email", password: "Password", logout: "Log out",
+    show: "Show", hide: "Hide",
     loginTagline: "Shop admin — sign in to manage orders", allShops: "All shops",
     "type.FARMER": "Farmer", "type.MISTRI": "Mistri",
     "status.RECEIVED": "RECEIVED", "status.QUOTED": "QUOTED", "status.PAID": "PAID",
@@ -90,6 +91,7 @@ const dict: Record<Lang, Record<string, string>> = {
     noCustomers: "अभी कोई ग्राहक नहीं।",
 
     signIn: "साइन इन", email: "ईमेल", password: "पासवर्ड", logout: "लॉग आउट",
+    show: "दिखाएँ", hide: "छिपाएँ",
     loginTagline: "शॉप एडमिन — ऑर्डर प्रबंधन के लिए साइन इन करें", allShops: "सभी शॉप",
     "type.FARMER": "किसान", "type.MISTRI": "मिस्त्री",
     "status.RECEIVED": "मिला", "status.QUOTED": "कोटेड", "status.PAID": "भुगतान",

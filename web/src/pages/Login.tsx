@@ -7,6 +7,7 @@ export function Login() {
   const { t, lang, setLang } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -34,7 +35,12 @@ export function Login() {
         </div>
         <div className="field" style={{ marginBottom: 14 }}>
           <label>{t("password")}</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="pw-row">
+            <input type={showPw ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)}>
+              {showPw ? t("hide") : t("show")}
+            </button>
+          </div>
         </div>
         <button type="submit" disabled={busy || !email || !password} style={{ width: "100%" }}>{t("signIn")}</button>
       </form>

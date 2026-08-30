@@ -32,6 +32,9 @@ a:hover { text-decoration: underline; }
 .login-lang { position: absolute; top: 14px; right: 14px; display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
 .login-lang button { background: transparent; color: var(--muted); border: none; padding: 3px 9px; font-size: 12px; border-radius: 0; }
 .login-lang button.on { background: var(--accent); color: #fff; }
+.pw-row { display: flex; gap: 6px; }
+.pw-row input { flex: 1; }
+.pw-toggle { background: #eef3f0; color: var(--muted); border: 1px solid var(--line); padding: 0 12px; font-size: 12px; }
 
 h2 { margin: 0 0 14px; font-size: 22px; }
 h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
