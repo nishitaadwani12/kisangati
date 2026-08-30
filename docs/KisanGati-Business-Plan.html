@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KisanGati — Business Plan &amp; Requirements</title>
+<style>
+  :root { --ink:#1a2b2b; --muted:#5a6b6b; --accent:#1f7a4d; --accent2:#b5651d; --line:#d9e2e0; --bg:#f7faf8; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Helvetica Neue", Arial, "Noto Sans", sans-serif; color: var(--ink);
+         line-height: 1.5; font-size: 11.5px; margin: 0; }
+  h1,h2,h3 { color: var(--ink); line-height: 1.2; }
+  h2 { font-size: 19px; border-bottom: 2px solid var(--accent); padding-bottom: 4px; margin-top: 26px; }
+  h3 { font-size: 14px; color: var(--accent); margin-top: 18px; }
+  p { margin: 6px 0; }
+  ul,ol { margin: 6px 0 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 10.5px; }
+  th,td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--accent); color: #fff; }
+  tr:nth-child(even) td { background: var(--bg); }
+  .muted { color: var(--muted); }
+  .tag { display:inline-block; background:var(--bg); border:1px solid var(--line); border-radius:10px;
+         padding:1px 8px; font-size:10px; color:var(--muted); }
+  .callout { background: var(--bg); border-left: 4px solid var(--accent2); padding: 8px 12px; margin: 12px 0; }
+  .callout.warn { border-left-color: #b5651d; }
+  .grid { display:flex; gap:14px; flex-wrap:wrap; }
+  .card { flex:1 1 45%; border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#fff; }
+  .cover { height: 100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;
+           text-align:center; page-break-after: always; }
+  .cover h1 { font-size: 46px; color: var(--accent); margin:0; letter-spacing:1px; }
+  .cover .sub { font-size: 16px; color: var(--muted); margin-top: 8px; }
+  .cover .hi { font-size: 22px; margin-top: 6px; }
+  .cover .meta { margin-top: 40px; font-size: 12px; color: var(--muted); }
+  .pagebreak { page-break-before: always; }
+  code { background:var(--bg); padding:1px 4px; border-radius:3px; font-size:10px; }
+  .flow { font-family: ui-monospace, Menlo, monospace; font-size:10px; background:var(--bg);
+          border:1px solid var(--line); border-radius:6px; padding:10px; white-space:pre; overflow:auto; }
+  @page { size: A4; margin: 16mm 14mm; }
+  footer { margin-top: 30px; border-top:1px solid var(--line); padding-top:8px; color:var(--muted); font-size:10px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="hi">किसानगति</div>
+  <h1>KisanGati</h1>
+  <div class="sub">Spare parts to the farmer's doorstep — order by WhatsApp, pay by UPI, receive at the village bus stop.</div>
+  <div class="sub" style="margin-top:22px;">Business Plan, Requirements &amp; Implementation Plan</div>
+  <div class="meta">
+    Prepared for review by the founding team (father — ground operations; brother; founder — technology).<br>
+    Draft v1 · August 2026 · <span class="muted">Internal — contains no committed shop data</span>
+  </div>
+</div>
+
+<h2>1. Executive summary</h2>
+<p><strong>What KisanGati is:</strong> a technology layer on top of the family's existing tractor
+spare-parts shop in Jhansi, UP. Today the shop already has inventory, wholesale suppliers, phone-order
+clients, and bus-conductor delivery tie-ups. KisanGati lets villagers and mechanics order parts remotely
+(by WhatsApp voice note or photo — no travel), pay upfront by UPI, and collect the part the same day at
+their village bus stop, while the shop handles billing, matching and dispatch through simple software
+instead of by hand.</p>
+<p><strong>Why now:</strong> the hard part of rural business — trust, inventory, and last-mile delivery —
+already exists in the shop. KisanGati digitizes the ordering and paperwork, so the same shop can serve far
+more villages without more staff, and lays the groundwork for a proprietary AI that identifies a part from
+a farmer's photo.</p>
+<p><strong>The core promise we prove first:</strong> a farmer sends a WhatsApp message → the shop sees it
+instantly with the part matched → the farmer pays by UPI → the part goes on the next bus with a secret
+4-digit code. Prove that loop with real orders under the existing shop name before spending on apps,
+lawyers, or advertising.</p>
+
+<div class="callout">
+  <strong>How to review this document:</strong> Father &amp; brother — please focus on
+  <em>Section 3 (who we serve)</em>, <em>Section 4 (how an order flows)</em>, <em>Section 6 (what the shop
+  must do)</em>, and <em>Section 11 (what we need from you)</em>. The technology sections (8–10) are for the
+  founder; skim them. Everything here is a <strong>draft to challenge</strong>, not a final decision.
+</div>
+
+<h2>2. The problem we solve</h2>
+<ul>
+  <li><strong>Farmers lose time and crop money.</strong> When a tractor breaks during sowing/harvest, the
+    farmer often travels hours to town, may not know the exact part, and loses a working day.</li>
+  <li><strong>Farmers can't name the part.</strong> Many don't know brand, model, or specs (how many teeth a
+    gear has, etc.) — they only have the broken piece in hand.</li>
+  <li><strong>The shop is limited by manual work.</strong> Phone orders, handwritten bills, and manual
+    routing cap how many villages one shop can serve.</li>
+  <li><strong>Cash-on-delivery is risky</strong> — non-pickup and disputes cause losses.</li>
+</ul>
+
+<h2>3. Who we serve</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Farmers / villagers</h3>
+    <p>Often low-literacy. Need zero-friction ordering: a Hindi <strong>voice note</strong> or a
+    <strong>photo</strong> of the broken part. Primary channel: <strong>WhatsApp</strong>; later, a simple app.</p>
+  </div>
+  <div class="card">
+    <h3>Mistris (mechanics)</h3>
+    <p>Power users who order repeatedly and hold farmer trust. Get a dedicated <strong>Android app</strong>
+    with a catalog, and a <strong>wallet with 3–5% cashback</strong> on orders they place. They are partners,
+    never bypassed.</p>
+  </div>
+</div>
+<p class="muted">Every order is tagged by where it came from (WhatsApp / app / counter) and who placed it
+(farmer / mistri), so we always know what is working.</p>
+
+<h2>4. How an order flows (the KisanGati loop)</h2>
+<div class="flow">Farmer sends WhatsApp message (text / voice / photo)
+      │
+      ▼
+Shop sees it instantly in the dashboard  ──►  (AI suggests the likely part)
+      │
+      ▼
+Staff confirm the part + price  ──►  send order summary + UPI QR in the chat
+      │
+      ▼
+Farmer pays by UPI (PhonePe / GPay / Paytm)  ──►  staff confirm payment received
+      │
+      ▼
+Shop packs + prints a label (bus route + conductor + 4-digit OTP)
+      │
+      ▼
+Part goes on the bus  ──►  farmer gives the OTP at the village stop to collect
+      │
+      ▼
+Delivered ✓  (mistri cashback credited, if a mistri placed it)</div>
+<p><strong>No part is packed before payment is confirmed.</strong> This removes the cash-on-delivery risk and
+matches how the shop's current UPI clients already work.</p>
+
+<h2>5. What makes KisanGati different</h2>
+<ul>
+  <li><strong>Order without knowing the part</strong> — send a voice note or a photo; the shop (and, over
+    time, the AI) figures out what it is.</li>
+  <li><strong>Delivery on the existing bus network</strong> — no new fleet, no courier cost; collected at the
+    village stop with a secret code.</li>
+  <li><strong>Upfront UPI only</strong> — no bad debt, no failed pickups.</li>
+  <li><strong>Mistri-friendly</strong> — mechanics earn commission and stay central, instead of being cut out.</li>
+  <li><strong>A data moat over time</strong> — every photo the shop resolves teaches an AI that will
+    eventually identify parts automatically.</li>
+</ul>
+
+<h2>6. What the shop must do (ground-operations requirements)</h2>
+<p>These are the responsibilities on the father/brother side — the parts KisanGati software supports but does
+not replace:</p>
+<table>
+  <tr><th>Area</th><th>What's needed</th></tr>
+  <tr><td>Catalog</td><td>A starting list of ~30–50 fast-moving parts with brand, tractor model fit, retail price, wholesale cost, and weight.</td></tr>
+  <tr><td>Inventory</td><td>Keep stock counts roughly current in the dashboard so the shop can promise same-day.</td></tr>
+  <tr><td>Part matching</td><td>Listen to the voice note / view the photo and confirm the exact part &amp; price (AI assists, human decides).</td></tr>
+  <tr><td>Payment check</td><td>Confirm the UPI payment landed before packing (manual for now).</td></tr>
+  <tr><td>Packing &amp; label</td><td>Pack the part, attach the printed label (route + conductor + OTP).</td></tr>
+  <tr><td>Bus dispatch</td><td>Hand to the right conductor; give the farmer the 4-digit OTP.</td></tr>
+  <tr><td>Disputes</td><td>Handle a lost/damaged part or a no-show with a simple refund/redelivery rule.</td></tr>
+</table>
+
+<h2>7. Product requirements (what we will build)</h2>
+
+<h3>7.1 Farmer — WhatsApp (first) and app (later)</h3>
+<ul>
+  <li>Send text, Hindi voice note, or photo of the part / engine nameplate.</li>
+  <li>Get an automatic acknowledgement in Hindi.</li>
+  <li>Receive an order summary with a <strong>Confirm</strong> button and a <strong>UPI QR in the chat</strong>.</li>
+  <li>Receive the 4-digit collection OTP when the part is dispatched, and a delivery confirmation.</li>
+  <li>App version (later): the same flow with big icons and Hindi voice, plus order history.</li>
+</ul>
+
+<h3>7.2 Mistri — Android app</h3>
+<ul>
+  <li>Phone + OTP login.</li>
+  <li>Browse catalog by brand / model; cart and quick reorder.</li>
+  <li>UPI checkout; order tracking with notifications.</li>
+  <li><strong>Wallet</strong>: 3–5% cashback on app-placed orders, with UPI payout.</li>
+  <li>Refer a farmer (mistri stays in the loop).</li>
+</ul>
+
+<h3>7.3 Shop — web dashboard (operated by us)</h3>
+<ul>
+  <li>One inbox for all orders (WhatsApp + app + counter).</li>
+  <li>Play the voice note / view the photo; see the AI's suggested parts.</li>
+  <li>Match to a catalog item, set price, send the UPI QR to the chat.</li>
+  <li>Mark payment received; print the dispatch label; mark dispatched / delivered.</li>
+  <li>Onboard a walk-in customer to both the app and WhatsApp at the counter.</li>
+  <li>Daily sales and simple analytics.</li>
+</ul>
+
+<h3>7.4 AI part identification (the long-term moat)</h3>
+<ul>
+  <li><strong>Goal:</strong> from a photo (+ optional voice note), identify brand, part type, and key specs,
+    and suggest the exact catalog item — even when the farmer can't name it.</li>
+  <li><strong>Honest limits:</strong> brand and part type from a photo are achievable; fine specs like exact
+    teeth count from a casual, greasy photo are hard and will stay human-checked at first.</li>
+  <li><strong>Plan:</strong> start now using online catalog images + a modern AI vision model to
+    <em>assist</em> staff, while every real photo the shop resolves is saved to train a better, KisanGati-owned
+    model over time. (Online images help bootstrap but do not replace real farmer photos.)</li>
+</ul>
+
+<h3>7.5 Payments</h3>
+<ul>
+  <li><strong>Now:</strong> a UPI QR / link is sent in the chat; the customer pays with any UPI app; staff
+    confirm receipt manually. No gateway, no fees — matches the shop's current practice.</li>
+  <li><strong>Later:</strong> a payment gateway (e.g. Razorpay) can auto-confirm payments; the system is built
+    so this is a simple switch, not a rebuild.</li>
+</ul>
+
+<h3>7.6 Delivery</h3>
+<ul>
+  <li>Reuse the existing bus-conductor tie-ups. Delivery to the village bus stop.</li>
+  <li>Claimed with a 4-digit OTP handed to the conductor / given to the farmer.</li>
+</ul>
+
+<h2>8. Market &amp; competition</h2>
+<p>Research into existing players (India, plus global analogues) shows the <strong>specific combination</strong>
+KisanGati targets — WhatsApp voice/photo ordering + AI part identification + bus-stop village delivery for
+<em>tractor</em> parts — is largely <strong>open ground</strong>. The pieces exist separately, but no one
+combines them for agricultural machinery.</p>
+<table>
+  <tr><th>Category</th><th>Examples</th><th>What they do</th><th>Gap vs KisanGati</th></tr>
+  <tr><td>Tractor-parts web stores</td><td>Gropart, Satyam Trac Parts, Agrodrag, OEM portals (Mahindra e-Spares)</td><td>Conventional prepaid, courier-shipped websites, pan-India, aimed at dealers/DIY buyers.</td><td>No rural intake, no voice/photo, no AI, no village last-mile.</td></tr>
+  <tr><td>Tractor marketplaces / info</td><td>Tractor Junction, KhetiGaadi, Tractorkarvan</td><td>New/used tractor listings, prices, finance leads.</td><td>Explicitly do <em>not</em> sell spare parts.</td></tr>
+  <tr><td>Agri-input delivery (village logistics analogues)</td><td>DeHaat, AgroStar, Gramophone, Hesa, Gramik</td><td>Sell seeds/fertilizer/agrochemicals to villages via apps + agents; strong rural last-mile.</td><td>Sell inputs, not machinery parts; none use bus-stop delivery. (Could add parts later — a competitive risk.)</td></tr>
+  <tr><td>AI + WhatsApp part ID</td><td>PARTO, TarkApp, AI-Spares (auto / industrial parts)</td><td>Photo/text part identification and quotes over WhatsApp.</td><td>Proven the tech works — but for cars/industry, not tractors. No agri catalog, no rural delivery.</td></tr>
+</table>
+<div class="callout warn">
+  <strong>Honest risk:</strong> the idea is differentiated but not un-copyable. Large agri platforms
+  (DeHaat, AgroStar) already have millions of farmer relationships and rural logistics and could bolt on a
+  parts catalog; auto-parts AI players could extend to tractors. Our durable edge must come from (a) a
+  proprietary tractor-parts fitment dataset that makes photo/voice ID actually work for low-literacy users,
+  and (b) the low-cost bus-stop delivery that no competitor has productized. <span class="muted">Source:
+  market scan, Aug 2026 — full citations kept in the project research notes.</span>
+</div>
+
+<h2>9. Business model &amp; financials</h2>
+
+<div class="callout warn">
+  <strong>Status:</strong> the benchmark data and modeling framework below are final. The last
+  research input — <strong>actual part prices, gross margin, and India/UP market size</strong> — is still
+  being gathered; once it lands, the <strong>Year 1–5 revenue projection</strong> and the two rows marked
+  <em>[pending]</em> will be filled in and the PDF rendered. Everything else here is ready to review.
+</div>
+
+<h3>9.1 How the money is made</h3>
+<ul>
+  <li><strong>Part margin</strong> — the spread between wholesale cost and retail price (the shop's existing margin). <span class="tag">[pending exact %]</span></li>
+  <li><strong>Delivery fee</strong> — a small flat fee on smaller orders (bus delivery cost is low), waived above a threshold.</li>
+  <li><strong>Later:</strong> mistri-services commission (Phase 3) and a platform fee from other shops that join (Phase 3).</li>
+</ul>
+
+<h3>9.2 What the market data tells us (and what it doesn't)</h3>
+<p>We researched comparable Indian rural / agri-commerce businesses. Two honest conclusions shape the plan:</p>
+<ul>
+  <li><strong>Rural commerce is a <em>volume</em> game, not a high-ticket one.</strong> Tier-2/3 towns drive ~3 of every 5 online orders in India, at roughly the same basket size as cities (Bain–Flipkart). Growth comes from more orders, not bigger ones.</li>
+  <li><strong>Margins are structurally thin sector-wide.</strong> B2B agri take-rates run ~3–5%; players survive on volume, repeat buyers, and private label — not on fat per-order profit. KisanGati's advantage is that it rides an <em>existing</em> shop's real part margin and a near-free bus last-mile, so its per-order economics can be healthier than pure-play startups.</li>
+</ul>
+<p class="muted">Note: tractor spare-parts order values are <strong>not published anywhere</strong> — no
+competitor or report discloses them. So AOV and margin must come from the father's real prices (the pending
+input), not from the market. That is expected and fine.</p>
+
+<h3>9.3 Benchmark table (used to build the projection)</h3>
+<table>
+  <tr><th>Lever</th><th>Benchmark / evidence</th><th>Working assumption</th></tr>
+  <tr><td>WhatsApp message → order conversion</td><td>Real large-sample data ~3–7% for broadcasts (GoKwik, RichAutomate). Vendor claims of 45%+ are unreliable and rejected.</td><td>Warm/opted-in intake (a farmer messaging to order) converts far higher than a cold broadcast — we model responded-enquiry → order at a healthy rate, cold outreach at 3–7%.</td></tr>
+  <tr><td>Payment cost</td><td>UPI person-to-merchant MDR is <strong>zero</strong> by RBI rule; gateway list rate ~2%+GST only if we later use one.</td><td>~₹0 now (manual UPI); ~2% only if/when a gateway is added.</td></tr>
+  <tr><td>Last-mile cost</td><td>Formal rural courier ≈ ₹60–130/parcel. Informal bus/rail parcel ≈ ₹5–30/kg (depot-to-depot).</td><td>Bus tie-up keeps our delivery cost near the low end — a real structural edge vs courier-based rivals.</td></tr>
+  <tr><td>Gross part margin</td><td>Retailer spread — <span class="tag">[pending father's real prices]</span></td><td>[pending]</td></tr>
+  <tr><td>Average order value (AOV)</td><td>Not published for parts; rural e-comm AOV ≈ ₹150–300 as a floor reference only.</td><td>[pending — from the real SKU price list]</td></tr>
+  <tr><td>Growth pattern</td><td>Rural players scaled order volume fast when density was reached (Ninjacart 60→5,000 orders/day) but several contracted when they over-extended (ElasticRun −49%).</td><td>Grow route-by-route from Jhansi; don't over-expand. Model conservative month-on-month order growth.</td></tr>
+</table>
+
+<h3>9.4 Year 1–5 revenue projection</h3>
+<div class="callout" id="projection-pending">
+  <strong>[ Pending the part-pricing &amp; market-size input ]</strong> — a Low / Base / High projection will be
+  built here from: orders/day (starting from the shop's real current volume), conservative monthly growth,
+  the real AOV and gross margin from the father's price list, minus near-zero payment cost and low bus
+  last-mile cost. Deliberately grounded in the shop's actual numbers, not startup hype.
+</div>
+
+<h2>10. Technology &amp; how we build it</h2>
+<table>
+  <tr><th>Piece</th><th>Choice</th><th>Why (plain terms)</th></tr>
+  <tr><td>Customer app</td><td>Flutter (Android)</td><td>One codebase, runs well on cheap phones, good Hindi text.</td></tr>
+  <tr><td>Shop dashboard</td><td>React web</td><td>Internal tool; fast to change; opens the door to letting other shops join later.</td></tr>
+  <tr><td>Server &amp; database</td><td>Node.js + PostgreSQL</td><td>The shared "brain" holding every order, user, and payment.</td></tr>
+  <tr><td>WhatsApp</td><td>Meta WhatsApp Cloud API</td><td>Official, free to test, no vendor lock-in.</td></tr>
+  <tr><td>Payments</td><td>Manual UPI QR now → gateway later</td><td>Start with what the shop already does; automate when it's worth it.</td></tr>
+  <tr><td>AI service</td><td>Python (vision + Hindi speech)</td><td>Suggests the part from photo/voice; improves as data grows.</td></tr>
+  <tr><td>Delivery</td><td>Existing bus tie-ups + OTP</td><td>No new fleet or courier cost.</td></tr>
+</table>
+
+<h3>Build order (money loop before polish)</h3>
+<ol>
+  <li>Server + database — the shared brain.</li>
+  <li>WhatsApp intake — prove farmers will order this way.</li>
+  <li>Shop web dashboard — process real orders end to end.</li>
+  <li>AI assist (in parallel) — help staff match parts; collect training data from day one.</li>
+  <li>Farmer + mistri apps — once the loop works with real money.</li>
+</ol>
+<p class="muted">Deferred until the loop works: the custom-trained AI model, the mistri services marketplace,
+opening the platform to other shops, and any large-scale deployment.</p>
+
+<h2>11. Roadmap &amp; long-term vision</h2>
+<table>
+  <tr><th>Phase</th><th>Focus</th><th>Outcome</th></tr>
+  <tr><td>Phase 0 — Prototype</td><td>WhatsApp intake → dashboard → UPI → OTP label, ~5 real bus dispatches under the current shop name.</td><td>Proof the loop works; trust with the family.</td></tr>
+  <tr><td>Phase 1 — Assisted operations</td><td>AI part-suggestion assist; more villages; onboard walk-ins.</td><td>One shop serves many more villages with the same staff.</td></tr>
+  <tr><td>Phase 2 — Apps + smarter AI</td><td>Mistri &amp; farmer apps; custom-trained part-ID model.</td><td>Loyalty, repeat orders, faster matching.</td></tr>
+  <tr><td>Phase 3 — Platform</td><td>Mistri services marketplace (farmers book nearby mechanics); open the platform to other spare-parts businesses.</td><td>KisanGati becomes a rural-repair platform, not just one shop.</td></tr>
+</table>
+
+<h2>12. Risks &amp; how we manage them</h2>
+<table>
+  <tr><th>Risk</th><th>Mitigation</th></tr>
+  <tr><td>Farmers hesitant to pay before seeing the part</td><td>Start with the shop's existing UPI clients who already do this; build reputation village by village.</td></tr>
+  <tr><td>Wrong part identified</td><td>Human always confirms before dispatch; AI only suggests.</td></tr>
+  <tr><td>Out-of-stock breaks the same-day promise</td><td>Quote a short delay or source from wholesaler; keep stock counts current.</td></tr>
+  <tr><td>Lost/damaged part or no-show at bus stop</td><td>Simple refund/redelivery rule; OTP proves handoff.</td></tr>
+  <tr><td>Bigger players copy the idea</td><td>Build the proprietary tractor-parts dataset and bus-stop delivery advantage early; move fast in Bundelkhand first.</td></tr>
+  <tr><td>Dependence on one shop / one town</td><td>Explicitly a Phase-0 constraint; expand routes and (later) shops once proven.</td></tr>
+</table>
+
+<h2>13. What we need from the family (to start)</h2>
+<ol>
+  <li><strong>Real order data:</strong> how many orders per week today, and which bus routes the father actually uses.</li>
+  <li><strong>Catalog seed:</strong> the top ~30–50 fast-moving parts with brand, model fit, retail price, wholesale cost, and weight.</li>
+  <li><strong>Sign-off on the flow</strong> in Section 4 and the shop responsibilities in Section 6.</li>
+  <li><strong>Agreement on the mistri commission</strong> (3–5% cashback on app orders) and refund rule.</li>
+  <li><strong>A decision on the first build</strong> — we recommend WhatsApp intake + dashboard first.</li>
+</ol>
+
+<footer>
+  KisanGati — Business Plan &amp; Requirements (Draft v1). Internal review copy for the founding family.
+  No shop prices, client numbers, or secrets are stored in software code. Prepared August 2026.
+</footer>
+
+</body>
+</html>
