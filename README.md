@@ -26,6 +26,19 @@ npm run dev
 
 Open http://localhost:5173.
 
+### Sample data (for viewing the dashboard)
+With the API running, populate demo data (10 SKUs, 4 customers, 4 orders across all statuses):
+
+```bash
+npm run seed        # drives the real API, so pricing/OTP/cashback logic matches production
+```
+
+Demo customers are prefixed `DEMO —` so they're easy to spot. **Before real use, wipe all demo data:**
+
+```bash
+npm run db:reset    # clears the database (start clean before entering real orders)
+```
+
 ## Order flow (what the dashboard drives)
 `RECEIVED → QUOTED (send UPI QR) → PAID (manual confirm + UTR) → DISPATCHED (bus + OTP) → DELIVERED (OTP)`.
 Mistri cashback is credited on delivery for app-placed mistri orders only.
