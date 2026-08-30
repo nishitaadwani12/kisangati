@@ -256,6 +256,7 @@ combines them for agricultural machinery.</p>
 <h3>9.1 How the money is made</h3>
 <ul>
   <li><strong>Part margin</strong> — the spread between wholesale cost and retail price (the shop's existing margin), researched at ~15–25% for genuine/OEM and higher on aftermarket/consumables.</li>
+  <li><strong>Two-tier pricing</strong> — farmers pay the retail price; mistris get a lower price (default ~10% off, or a set mistri price per part), because they buy repeatedly and bring in farmers. The system applies the right price automatically by who the order is for, and never lets the mistri price fall below cost. See §9.6.</li>
   <li><strong>Delivery fee</strong> — a small flat fee on smaller orders (bus delivery cost is low), waived above a threshold.</li>
   <li><strong>Later:</strong> mistri-services commission (Phase 3) and a platform fee from other shops that join (Phase 3).</li>
 </ul>
@@ -338,6 +339,22 @@ wholesale cost, <em>before</em> operating costs. Starting point is the shop's re
 auto-parts proxies, not tractor-OEM-published; the ₹25k–75k/tractor spend and UP share are the firmest
 figures. The projection is anchored to the shop's <em>real</em> current volume, not to these market totals.</p>
 
+<h3>9.6 Two-tier pricing (farmer vs mistri)</h3>
+<p>The same part is sold at two prices: the <strong>farmer (retail) price</strong> and a lower
+<strong>mistri price</strong> — standard trade practice, because mistris buy repeatedly and bring farmers to
+us. How we keep it consistent:</p>
+<ul>
+  <li>Every part in the catalog stores <strong>both prices</strong>; a mistri price can be set per part, or
+    left blank to auto-apply a set discount (default ~10% off retail).</li>
+  <li>When an order is matched, the system <strong>fills the correct price automatically by who the order is
+    for</strong> — staff don't have to remember. They can still override for bargaining.</li>
+  <li><strong>Guardrail:</strong> the mistri price can never drop below wholesale cost (no loss-making sales)
+    or exceed the farmer price.</li>
+  <li>Farmers and mistris use different app views, so a farmer <strong>never sees</strong> the mistri price.</li>
+  <li>If a farmer asks a mistri to order on his behalf to get the cheaper price, that's fine — it's the
+    referral model working (the mistri stays in the loop and earns cashback), not a leak.</li>
+</ul>
+
 <h2>10. Technology &amp; how we build it</h2>
 <table>
   <tr><th>Piece</th><th>Choice</th><th>Why (plain terms)</th></tr>
@@ -400,7 +417,34 @@ opening the platform to other shops, and any large-scale deployment.</p>
   <tr><td>Lost/damaged part or no-show at bus stop</td><td>Simple refund/redelivery rule; OTP proves handoff.</td></tr>
   <tr><td>Bigger players copy the idea</td><td>Build the proprietary tractor-parts dataset and bus-stop delivery advantage early; move fast in Bundelkhand first.</td></tr>
   <tr><td>Dependence on one shop / one town</td><td>Explicitly a Phase-0 constraint; expand routes and (later) shops once proven.</td></tr>
+  <tr><td>Mistri takes a customer off-platform (disintermediation)</td><td>Unpreventable outright; out-compete it — see §12.1.</td></tr>
 </table>
+
+<h3>12.1 Keeping mistris on the platform (anti-disintermediation)</h3>
+<p>A real concern: a mistri meets a farmer through us, then does future jobs directly to avoid our involvement.
+Every marketplace faces this (Urban Company, Uber, Airbnb). It <strong>can't be fully prevented, and heavy
+policing backfires</strong> — it just makes mistris leave faster. The winning approach is to make staying with
+us clearly better for the mistri, in this order:</p>
+<ol>
+  <li><strong>We are a demand engine.</strong> A good on-platform rating brings a mistri a <em>stream of new
+    farmers</em> he'd never reach alone. Leaving stops that pipeline. Build ratings + a "verified mistri" badge
+    that visibly drives more bookings — this is the strongest retention lever.</li>
+  <li><strong>Anchor on parts, not labour.</strong> A mistri can't disintermediate the <em>part</em> — he
+    doesn't hold our inventory or supplier ties. Even a direct repair still needs a part from us (with cashback,
+    genuine-part guarantee, delivery). The real leak risk is only the Phase-3 <em>services</em> marketplace,
+    which buys time to build these levers first.</li>
+  <li><strong>On-platform-only value the farmer would lose off-book:</strong> UPI payment protection +
+    dispute/refund handling, genuine-part warranty/replacement, and mistri wallet cashback &amp; credit. If the
+    <em>farmer</em> feels safer booking through us, he resists going direct.</li>
+  <li><strong>Keep the take-rate low.</strong> Leakage is driven by fees; a small cut plus real convenience
+    makes going around us not worth the hassle.</li>
+  <li><strong>Soft monitoring, not surveillance.</strong> Watch signals (an active mistri's orders suddenly
+    drop) and reach out — don't punish. A terms clause sets a norm but has weak enforceability in an informal
+    rural setting.</li>
+</ol>
+<p class="muted">Bottom line: accept some leakage as a cost of doing business; win by making the mistri
+<em>earn more with us than without us</em> (new customers + reputation + cashback + credit), not by contracts
+or tracking.</p>
 
 <h2>13. What we need from the family (as design partners &amp; launch customer)</h2>
 <p class="muted">The family shop is KisanGati's first admin, first seller, and first clientele — the proof
