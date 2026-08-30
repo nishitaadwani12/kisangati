@@ -350,6 +350,26 @@ figures. The projection is anchored to the shop's <em>real</em> current volume, 
   <tr><td>Delivery</td><td>Existing bus tie-ups + OTP</td><td>No new fleet or courier cost.</td></tr>
 </table>
 
+<h3>Do we need a separate ERP or CRM?</h3>
+<p><strong>Not now — the platform we build already is one.</strong> Quick definitions:</p>
+<ul>
+  <li><strong>CRM</strong> (Customer Relationship Management) — stores customers, their order history and
+    interactions, for follow-up and loyalty (e.g. Zoho CRM, Salesforce).</li>
+  <li><strong>ERP</strong> (Enterprise Resource Planning) — ties together inventory, purchasing, accounting
+    and GST/tax (e.g. SAP, Odoo; in India <strong>Tally</strong> for accounting).</li>
+</ul>
+<p>KisanGati's own database already covers the core of both: the <code>users</code> table (with order
+history and mistri wallet) <em>is</em> the CRM; <code>skus</code> + stock + <code>orders</code> +
+<code>payments</code> are the order/inventory backbone of an ERP. Buying a separate system now would
+duplicate this, cost money, and mean syncing two tools — for no benefit.</p>
+<table>
+  <tr><th>Need</th><th>When</th><th>Plan</th></tr>
+  <tr><td>Customer &amp; order tracking (CRM)</td><td>Now</td><td>Built into the platform — no purchase.</td></tr>
+  <tr><td>Inventory &amp; orders (ERP core)</td><td>Now</td><td>Built into the platform — no purchase.</td></tr>
+  <tr><td>Accounting + GST filing</td><td>When real payments + incorporation begin</td><td>Use Tally / Zoho Books (or a CA); export from our system to it — don't rebuild tax logic. <em>(What does the shop use today for billing/GST?)</em></td></tr>
+  <tr><td>Heavyweight ERP (SAP etc.)</td><td>National multi-shop scale, if ever</td><td>Add features to our platform or integrate; avoid forcing sellers onto rigid enterprise software.</td></tr>
+</table>
+
 <h3>Build order (money loop before polish)</h3>
 <ol>
   <li>Server + database — the shared brain.</li>
