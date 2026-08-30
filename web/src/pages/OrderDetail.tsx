@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, Order, Sku } from "../api";
-import { rupees, rupeesToPaise, when } from "../format";
+import { rupees, rupeesToPaise, when, suggestedPricePaise } from "../format";
 import { Badge } from "../components/Layout";
 
 type Line = { skuId: string; name: string; qty: number; unitPriceRupees: number };
@@ -39,7 +39,9 @@ export function OrderDetail() {
   const addLine = (skuId: string) => {
     const s = skus.find((x) => x.id === skuId);
     if (!s) return;
-    setLines([...lines, { skuId: s.id, name: s.name, qty: 1, unitPriceRupees: s.retailPrice / 100 }]);
+    // Default the unit price by the customer's type (farmer vs mistri). Staff can still override.
+    const price = suggestedPricePaise(s, order.user.userType);
+    setLines([...lines, { skuId: s.id, name: s.name, qty: 1, unitPriceRupees: price / 100 }]);
   };
   const saveItems = () =>
     act(() => api.setItems(id, lines.map((l) => ({ skuId: l.skuId, qty: l.qty, unitPrice: rupeesToPaise(l.unitPriceRupees) }))), "Items saved");
@@ -91,9 +93,10 @@ export function OrderDetail() {
           <div className="row" style={{ marginTop: 10 }}>
             <select defaultValue="" onChange={(e) => { addLine(e.target.value); e.currentTarget.value = ""; }}>
               <option value="" disabled>+ add part…</option>
-              {skus.map((s) => <option key={s.id} value={s.id}>{s.name} {s.brand ? `(${s.brand})` : ""} — ₹{s.retailPrice / 100}</option>)}
+              {skus.map((s) => <option key={s.id} value={s.id}>{s.name} {s.brand ? `(${s.brand})` : ""} — {rupees(suggestedPricePaise(s, order.user.userType))}</option>)}
             </select>
             <button onClick={saveItems} disabled={lines.length === 0}>Save items</button>
+            <span className="muted">Prices shown are the {order.user.userType === "MISTRI" ? "mistri" : "farmer"} rate.</span>
           </div>
         )}
         <div className="spread" style={{ marginTop: 12 }}>

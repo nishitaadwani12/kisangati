@@ -28,6 +28,7 @@ export type Sku = {
   modelCompat: string | null;
   category: string | null;
   retailPrice: number;
+  mistriPrice: number | null;
   wholesalePrice: number;
   weightG: number;
   stockQty: number;

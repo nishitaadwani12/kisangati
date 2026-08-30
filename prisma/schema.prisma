@@ -68,7 +68,8 @@ model Sku {
   brand         String?
   modelCompat   String?
   category      String? // LOW | MEDIUM | HIGH (ticket tier) — informational
-  retailPrice   Int // paise
+  retailPrice   Int // paise — the FARMER price
+  mistriPrice   Int? // paise — the discounted MISTRI price; if null, derived from MISTRI_DISCOUNT_PERCENT
   wholesalePrice Int    @default(0) // paise
   weightG       Int     @default(0)
   stockQty      Int     @default(0)

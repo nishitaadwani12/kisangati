@@ -28,3 +28,20 @@ export const CASHBACK_RATE = cashbackRate();
 export function cashbackFor(subtotalPaise: number): number {
   return Math.round(subtotalPaise * CASHBACK_RATE);
 }
+
+// Two-tier pricing: farmers pay retailPrice, mistris pay a lower price. If a SKU has no explicit
+// mistriPrice, derive it from this default discount off retail.
+function mistriDiscount(): number {
+  const pct = Number(process.env.MISTRI_DISCOUNT_PERCENT);
+  return Number.isFinite(pct) && pct >= 0 && pct < 100 ? pct / 100 : 0.1; // default 10%
+}
+export const MISTRI_DISCOUNT = mistriDiscount();
+
+// Suggested unit price (paise) for a SKU given the buyer's user type. Staff may still override.
+export function priceFor(
+  sku: { retailPrice: number; mistriPrice: number | null },
+  userType: string
+): number {
+  if (userType === "MISTRI") return sku.mistriPrice ?? Math.round(sku.retailPrice * (1 - MISTRI_DISCOUNT));
+  return sku.retailPrice;
+}
