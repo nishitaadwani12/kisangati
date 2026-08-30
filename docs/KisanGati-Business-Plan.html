@@ -45,29 +45,44 @@
 <div class="cover">
   <div class="hi">किसानगति</div>
   <h1>KisanGati</h1>
-  <div class="sub">Spare parts to the farmer's doorstep — order by WhatsApp, pay by UPI, receive at the village bus stop.</div>
+  <div class="sub">A national platform connecting farmers, spare-parts shops, and mechanics —
+  order by WhatsApp, pay by UPI, receive at the village bus stop.</div>
   <div class="sub" style="margin-top:22px;">Business Plan, Requirements &amp; Implementation Plan</div>
   <div class="meta">
-    Prepared for review by the founding team (father — ground operations; brother; founder — technology).<br>
+    Founder: <strong>Nishita Adwani</strong> (technology &amp; strategy). Ground-operations design partners &amp;
+    launch customer: the family tractor spare-parts shop, Jhansi, UP (father &amp; brother).<br>
     Draft v1 · August 2026 · <span class="muted">Internal — contains no committed shop data</span>
   </div>
 </div>
 
 <h2>1. Executive summary</h2>
-<p><strong>What KisanGati is:</strong> a technology layer on top of the family's existing tractor
-spare-parts shop in Jhansi, UP. Today the shop already has inventory, wholesale suppliers, phone-order
-clients, and bus-conductor delivery tie-ups. KisanGati lets villagers and mechanics order parts remotely
-(by WhatsApp voice note or photo — no travel), pay upfront by UPI, and collect the part the same day at
-their village bus stop, while the shop handles billing, matching and dispatch through simple software
-instead of by hand.</p>
-<p><strong>Why now:</strong> the hard part of rural business — trust, inventory, and last-mile delivery —
-already exists in the shop. KisanGati digitizes the ordering and paperwork, so the same shop can serve far
-more villages without more staff, and lays the groundwork for a proprietary AI that identifies a part from
-a farmer's photo.</p>
+<p><strong>What KisanGati is:</strong> a national platform that connects farmers to spare-parts shops and
+mechanics (mistris), so any farmer can order a part remotely — by WhatsApp voice note or photo, no travel —
+pay upfront by UPI, and collect it the same day at their village bus stop. Over time KisanGati onboards many
+shops, mistris, and farmers across India, with a proprietary AI that identifies a part from a photo even
+when the farmer can't name it.</p>
+<p><strong>Where it starts (the beachhead):</strong> the founder's family runs a tractor spare-parts shop in
+Jhansi, UP, with real inventory, suppliers, phone-order clients, and existing bus-conductor delivery. That
+shop is KisanGati's <strong>launch customer #1 and design partner</strong> — the ideal place to prove the
+model with real orders before opening the platform to other shops. It de-risks the classic startup
+cold-start: KisanGati begins with a working shop, real demand, and a proven last-mile from day one.</p>
+<p><strong>Why this can scale nationally:</strong> the hard, unglamorous parts of rural commerce — trust,
+inventory, and last-mile — are solved shop-by-shop by onboarding <em>existing</em> local shops like this
+one, rather than building them from scratch. KisanGati provides the technology layer (intake, matching, AI,
+payments, dispatch, loyalty) that turns any local parts shop into a remote-serving, farmer-friendly
+business — and connects farmers and mistris across shops.</p>
 <p><strong>The core promise we prove first:</strong> a farmer sends a WhatsApp message → the shop sees it
 instantly with the part matched → the farmer pays by UPI → the part goes on the next bus with a secret
-4-digit code. Prove that loop with real orders under the existing shop name before spending on apps,
-lawyers, or advertising.</p>
+4-digit code. Prove that loop at the Jhansi shop, then replicate it to the next shop, the next town, the next
+state.</p>
+
+<h3>1.1 Vision &amp; the role of the family shop</h3>
+<p>KisanGati is <strong>Nishita Adwani's startup</strong>, not merely software for one shop. The mission is
+national: <em>connect India's farmers, spare-parts shops, and mistris on one platform.</em> The family
+business is leveraged deliberately — the father and brother bring deep ground knowledge (inventory,
+packaging, bus dispatch), and their shop becomes the <strong>first admin, first seller, and first
+clientele</strong>. Helping the family business is a happy outcome; it is also the smartest possible way to
+validate a platform that will eventually serve thousands of shops.</p>
 
 <div class="callout">
   <strong>How to review this document:</strong> Father &amp; brother — please focus on
@@ -303,6 +318,10 @@ wholesale cost, <em>before</em> operating costs. Starting point is the shop's re
       expanding route-by-route. High assumes strong app adoption + more villages; Low assumes slow uptake.</li>
     <li>Mistri cashback (3–5% on app orders) and the Phase-3 services/platform fees are upside <em>not</em>
       included above.</li>
+    <li><strong>This is single-shop (beachhead) economics.</strong> It shows the Jhansi shop is a viable,
+      profitable proof case — but it is <em>not</em> the company's ceiling. The national platform multiplies
+      this across many onboarded shops (a per-shop take-rate / subscription), which is a far larger and
+      separate revenue line, modeled once the single-shop loop is proven.</li>
   </ul>
 </div>
 
@@ -313,6 +332,7 @@ wholesale cost, <em>before</em> operating costs. Starting point is the shop's re
   <li><strong>Each tractor spends ~₹25,000–75,000/yr on parts &amp; maintenance</strong> (40–45 HP class, excl. tyres). <span class="muted">[TractorGyan, HARD]</span></li>
   <li><strong>Illustration:</strong> if the Jhansi/Bundelkhand catchment has even ~50,000 working tractors, that's roughly <strong>₹150–350 crore/yr</strong> of local parts spend. KisanGati's Year-5 <em>Base</em> sales (₹1.6 Cr) is well under 1% of that — the ceiling is not the constraint; execution and trust are. <span class="muted">[EST — no Bundelkhand-specific tractor count exists in public data]</span></li>
   <li><strong>Tailwind:</strong> western UP/Punjab/Haryana are &gt;90% mechanized, but eastern UP &amp; Bundelkhand are less saturated — headroom as mechanization rises. <span class="muted">[Mordor, HARD]</span></li>
+  <li><strong>National prize (the real ceiling):</strong> India has ~800,000+ new tractors sold/yr on a multi-million fleet, and the total auto-components aftermarket runs <strong>~₹53,000 crore per half-year</strong> across vehicles. <span class="muted">[FADA; IBEF, HARD]</span> The single-shop projection above is the beachhead; the platform's addressable market is this national aftermarket, captured shop-by-shop.</li>
 </ul>
 <p class="muted">Data caveats: tractor-market reports diverge 2–5× (ranges used); margins &amp; service intervals are
 auto-parts proxies, not tractor-OEM-published; the ₹25k–75k/tractor spend and UP share are the firmest
@@ -344,10 +364,11 @@ opening the platform to other shops, and any large-scale deployment.</p>
 <h2>11. Roadmap &amp; long-term vision</h2>
 <table>
   <tr><th>Phase</th><th>Focus</th><th>Outcome</th></tr>
-  <tr><td>Phase 0 — Prototype</td><td>WhatsApp intake → dashboard → UPI → OTP label, ~5 real bus dispatches under the current shop name.</td><td>Proof the loop works; trust with the family.</td></tr>
-  <tr><td>Phase 1 — Assisted operations</td><td>AI part-suggestion assist; more villages; onboard walk-ins.</td><td>One shop serves many more villages with the same staff.</td></tr>
-  <tr><td>Phase 2 — Apps + smarter AI</td><td>Mistri &amp; farmer apps; custom-trained part-ID model.</td><td>Loyalty, repeat orders, faster matching.</td></tr>
-  <tr><td>Phase 3 — Platform</td><td>Mistri services marketplace (farmers book nearby mechanics); open the platform to other spare-parts businesses.</td><td>KisanGati becomes a rural-repair platform, not just one shop.</td></tr>
+  <tr><td>Phase 0 — Prototype (beachhead)</td><td>WhatsApp intake → dashboard → UPI → OTP label, ~5 real bus dispatches at the family Jhansi shop.</td><td>Prove the loop works; the family shop = launch customer #1.</td></tr>
+  <tr><td>Phase 1 — Assisted operations</td><td>AI part-suggestion assist; more villages &amp; bus routes; onboard walk-ins.</td><td>One shop serves many more villages with the same staff — the repeatable playbook.</td></tr>
+  <tr><td>Phase 2 — Apps + smarter AI</td><td>Mistri &amp; farmer apps; custom-trained part-ID model.</td><td>Loyalty, repeat orders, faster matching — the product that a second shop would adopt.</td></tr>
+  <tr><td>Phase 3 — Multi-shop platform</td><td><strong>Onboard other spare-parts shops</strong> (each gets the dashboard as a seller portal); connect farmers &amp; mistris across shops; mistri services marketplace (farmers book nearby mechanics).</td><td>KisanGati becomes a <strong>national network</strong> of shops, mistris, and farmers — not one shop's tool.</td></tr>
+  <tr><td>Phase 4 — Scale nationally</td><td>Region-by-region expansion (start UP/Bundelkhand), category expansion beyond tractors, platform take-rate / subscription revenue.</td><td>A national rural spare-parts &amp; repair platform.</td></tr>
 </table>
 
 <h2>12. Risks &amp; how we manage them</h2>
@@ -361,7 +382,9 @@ opening the platform to other shops, and any large-scale deployment.</p>
   <tr><td>Dependence on one shop / one town</td><td>Explicitly a Phase-0 constraint; expand routes and (later) shops once proven.</td></tr>
 </table>
 
-<h2>13. What we need from the family (to start)</h2>
+<h2>13. What we need from the family (as design partners &amp; launch customer)</h2>
+<p class="muted">The family shop is KisanGati's first admin, first seller, and first clientele — the proof
+case for a platform that will later serve many shops. To launch it we need:</p>
 <ol>
   <li><strong>Real order data:</strong> how many orders per week today, and which bus routes the father actually uses.</li>
   <li><strong>Catalog seed:</strong> the top ~30–50 fast-moving parts with brand, model fit, retail price, wholesale cost, and weight.</li>
