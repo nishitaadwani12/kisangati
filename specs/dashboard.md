@@ -60,8 +60,11 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 - **[Later]** Channel adoption over time, top parts, repeat-customer rate.
 
 ### 8. Platform & access
-- **[Later]** Roles/permissions (owner vs staff).
-- **[Later]** Multi-shop: each seller sees only its own data; network-wide admin view for the founder.
+- **[Built]** Login (email + password, hashed with bcrypt) → JWT sessions; all `/api` routes require auth.
+- **[Built]** Roles: `OWNER`/`STAFF` (scoped to one shop) and `SUPER_ADMIN` (network-wide, with a shop switcher).
+- **[Built]** Multi-shop isolation: orders, catalog, and customers are scoped by `shopId`; a shop cannot read
+  another shop's data (cross-shop access → 404). Customer phone is unique per shop.
+- **[Later]** Shop self-sign-up flow, per-shop billing, granular staff permissions.
 
 ## Data touched (see Prisma schema)
 `users`, `orders`, `order_items`, `skus`, `payments`, `deliveries`, `wallet_txns`, `part_predictions`,

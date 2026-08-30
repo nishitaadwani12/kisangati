@@ -1,15 +1,33 @@
 // Thin API client for the KisanGati backend. All money is in paise.
 
+// Append the super-admin's selected shop (if any) so their reads/writes target that shop.
+function withShop(path: string): string {
+  const shop = localStorage.getItem("kg_shop");
+  if (!shop) return path;
+  return path + (path.includes("?") ? "&" : "?") + "shopId=" + encodeURIComponent(shop);
+}
+
 async function req<T>(path: string, method = "GET", body?: unknown): Promise<T> {
-  const res = await fetch(`/api${path}`, {
+  const token = localStorage.getItem("kg_token");
+  const headers: Record<string, string> = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`/api${withShop(path)}`, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (res.status === 401 && !path.startsWith("/auth/login")) {
+    localStorage.removeItem("kg_token");
+    if (location.pathname !== "/") location.href = "/";
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || `Request failed (${res.status})`);
   return data as T;
 }
+
+export type MeUser = { id: string; name: string | null; email: string; role: string; shopId: string | null; shopName: string | null };
+export type Shop = { id: string; name: string; town: string | null };
 
 export type Customer = {
   id: string;
@@ -59,6 +77,10 @@ export type Order = {
 export type TodayStats = { ordersToday: number; salesTodayPaise: number; statusBreakdown: Record<string, number> };
 
 export const api = {
+  login: (email: string, password: string) =>
+    req<{ token: string; user: MeUser }>("/auth/login", "POST", { email, password }),
+  me: () => req<{ user: MeUser; shops: Shop[] }>("/auth/me"),
+
   orders: (status?: string) => req<Order[]>(`/orders${status ? `?status=${status}` : ""}`),
   order: (id: string) => req<Order>(`/orders/${id}`),
   createOrder: (b: { userId: string; orderSource?: string; rawText?: string; tractorBrand?: string; model?: string }) =>

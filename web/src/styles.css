@@ -19,6 +19,20 @@ a:hover { text-decoration: underline; }
 .sidebar nav a.active { background: #1f7a4d; color: #fff; }
 .main { flex: 1; padding: 22px 26px; max-width: 1000px; }
 
+.sidebar { display: flex; flex-direction: column; }
+.sidebar-foot { margin-top: auto; padding-top: 18px; border-top: 1px solid #2f5a4b; display: flex; flex-direction: column; gap: 8px; }
+.shopswitch { width: 100%; }
+.shopname { color: #fff; font-weight: 600; font-size: 14px; }
+.whoami { color: #9fc5b4; font-size: 11px; }
+.logout { width: 100%; }
+
+/* Login screen */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); }
+.login-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 28px; width: 340px; position: relative; box-shadow: 0 6px 24px rgba(0,0,0,.06); }
+.login-lang { position: absolute; top: 14px; right: 14px; display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.login-lang button { background: transparent; color: var(--muted); border: none; padding: 3px 9px; font-size: 12px; border-radius: 0; }
+.login-lang button.on { background: var(--accent); color: #fff; }
+
 h2 { margin: 0 0 14px; font-size: 22px; }
 h3 { font-size: 15px; color: var(--accent); margin: 18px 0 8px; }
 

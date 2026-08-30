@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
 import { HttpError } from "./lib/http";
+import { authRequired } from "./middleware/auth";
+import { auth } from "./routes/auth";
 import { orders } from "./routes/orders";
 import { skus } from "./routes/skus";
 import { customers } from "./routes/customers";
@@ -15,10 +17,11 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", service: "kisangati", ts: new Date().toISOString() });
 });
 
-app.use("/api/orders", orders);
-app.use("/api/skus", skus);
-app.use("/api/customers", customers);
-app.use("/api/stats", stats);
+app.use("/api/auth", auth); // public (login) + /me (self-guarded)
+app.use("/api/orders", authRequired, orders);
+app.use("/api/skus", authRequired, skus);
+app.use("/api/customers", authRequired, customers);
+app.use("/api/stats", authRequired, stats);
 
 // Central error handler — HttpError carries a status; everything else is a 500.
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

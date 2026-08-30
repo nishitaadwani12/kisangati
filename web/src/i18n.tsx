@@ -43,6 +43,8 @@ const dict: Record<Lang, Record<string, string>> = {
     customerAdded: "Customer added — introduce both the app and WhatsApp at the counter.",
     noCustomers: "No customers yet.",
 
+    signIn: "Sign in", email: "Email", password: "Password", logout: "Log out",
+    loginTagline: "Shop admin — sign in to manage orders", allShops: "All shops",
     "type.FARMER": "Farmer", "type.MISTRI": "Mistri",
     "status.RECEIVED": "RECEIVED", "status.QUOTED": "QUOTED", "status.PAID": "PAID",
     "status.PACKED": "PACKED", "status.DISPATCHED": "DISPATCHED", "status.DELIVERED": "DELIVERED",
@@ -87,6 +89,8 @@ const dict: Record<Lang, Record<string, string>> = {
     customerAdded: "ग्राहक जोड़ा गया — काउंटर पर ऐप और WhatsApp दोनों बताएँ।",
     noCustomers: "अभी कोई ग्राहक नहीं।",
 
+    signIn: "साइन इन", email: "ईमेल", password: "पासवर्ड", logout: "लॉग आउट",
+    loginTagline: "शॉप एडमिन — ऑर्डर प्रबंधन के लिए साइन इन करें", allShops: "सभी शॉप",
     "type.FARMER": "किसान", "type.MISTRI": "मिस्त्री",
     "status.RECEIVED": "मिला", "status.QUOTED": "कोटेड", "status.PAID": "भुगतान",
     "status.PACKED": "पैक", "status.DISPATCHED": "भेजा", "status.DELIVERED": "डिलीवर",

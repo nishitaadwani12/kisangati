@@ -39,7 +39,16 @@ With the API running, populate demo data (10 SKUs, 4 customers, 4 orders across 
 npm run seed        # drives the real API, so pricing/OTP/cashback logic matches production
 ```
 
-Demo customers are prefixed `DEMO —` so they're easy to spot. **Before real use, wipe all demo data:**
+Demo customers are prefixed `DEMO —` so they're easy to spot. The seed also creates **two shops** and
+login accounts so you can see multi-shop isolation (password for all: `kisan123`):
+
+| Email | Role | Sees |
+|---|---|---|
+| `nishita@kisangati.in` | SUPER_ADMIN | all shops (with a shop switcher) |
+| `shop1@kisangati.in` | OWNER | Adwani Tractor Spares only |
+| `shop2@kisangati.in` | OWNER | Relative Tractor Parts only |
+
+**Before real use, wipe all demo data:**
 
 ```bash
 npm run db:reset    # clears the database (start clean before entering real orders)

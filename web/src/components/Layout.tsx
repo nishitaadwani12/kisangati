@@ -1,10 +1,15 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useI18n } from "../i18n";
+import { useAuth } from "../auth";
 
 const link = ({ isActive }: { isActive: boolean }) => (isActive ? "active" : "");
 
 export function Layout() {
   const { t, lang, setLang } = useI18n();
+  const { user, shops, selectedShop, selectShop, logout } = useAuth();
+  const navigate = useNavigate();
+  const isSuper = user?.role === "SUPER_ADMIN";
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -20,6 +25,23 @@ export function Layout() {
           <NavLink to="/catalog" className={link}>{t("nav.catalog")}</NavLink>
           <NavLink to="/customers" className={link}>{t("nav.customers")}</NavLink>
         </nav>
+
+        <div className="sidebar-foot">
+          {isSuper ? (
+            <select
+              className="shopswitch"
+              value={selectedShop}
+              onChange={(e) => { selectShop(e.target.value); navigate(0); }}
+            >
+              <option value="">{t("allShops")}</option>
+              {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          ) : (
+            <div className="shopname">{user?.shopName}</div>
+          )}
+          <div className="whoami">{user?.name || user?.email} · {user?.role}</div>
+          <button className="secondary logout" onClick={logout}>{t("logout")}</button>
+        </div>
       </aside>
       <main className="main">
         <Outlet />

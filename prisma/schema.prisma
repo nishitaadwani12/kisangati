@@ -12,9 +12,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Shop {
+  id        String   @id @default(cuid())
+  name      String
+  town      String?
+  createdAt DateTime @default(now())
+
+  admins    AdminUser[]
+  users     User[]
+  orders    Order[]
+  skus      Sku[]
+}
+
+// Dashboard login accounts (shop owners/staff and the network super-admin). Distinct from customers (User).
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("STAFF") // SUPER_ADMIN | OWNER | STAFF
+  shopId       String? // null for SUPER_ADMIN (network-wide); set for OWNER/STAFF
+  shop         Shop?    @relation(fields: [shopId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
 model User {
   id                 String   @id @default(cuid())
-  phone              String   @unique
+  shopId             String
+  shop               Shop     @relation(fields: [shopId], references: [id])
+  phone              String
   name               String?
   userType           String // FARMER | MISTRI
   acquisitionChannel String // WALK_IN | WHATSAPP | MISTRI_REFERRAL | APP
@@ -26,10 +52,14 @@ model User {
 
   orders      Order[]
   walletTxns  WalletTxn[] @relation("MistriWallet")
+
+  @@unique([shopId, phone]) // a customer phone is unique within a shop, not globally
 }
 
 model Order {
   id           String   @id @default(cuid())
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id])
   userId       String
   user         User     @relation(fields: [userId], references: [id])
   orderSource  String // WHATSAPP | APP | COUNTER
@@ -64,6 +94,8 @@ model OrderItem {
 
 model Sku {
   id            String  @id @default(cuid())
+  shopId        String
+  shop          Shop    @relation(fields: [shopId], references: [id])
   name          String
   brand         String?
   modelCompat   String?

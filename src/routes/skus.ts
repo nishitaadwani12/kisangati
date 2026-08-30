@@ -1,10 +1,20 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
+import { shopFilter, shopIdForCreate } from "../middleware/auth";
 
 export const skus = Router();
 
-// GET /api/skus?q=&lowStock=  — list/search catalog
+function shopWhere(req: Request) {
+  const s = shopFilter(req);
+  return s === undefined ? {} : { shopId: s };
+}
+function canAccess(req: Request, shopId: string) {
+  const s = shopFilter(req);
+  return s === undefined || s === shopId;
+}
+
+// GET /api/skus?q=&lowStock=  — list/search catalog (shop-scoped)
 skus.get(
   "/",
   ah(async (req, res) => {
@@ -13,6 +23,7 @@ skus.get(
     const list = await db.sku.findMany({
       where: {
         AND: [
+          shopWhere(req),
           q ? { OR: [{ name: { contains: q } }, { brand: { contains: q } }, { modelCompat: { contains: q } }] } : {},
           lowStock ? { stockQty: { lte: 5 } } : {},
         ],
@@ -40,8 +51,10 @@ skus.post(
       throw new HttpError(400, "name and integer retailPrice(paise)>=0 are required");
     const wholesalePrice = Number.isInteger(b.wholesalePrice) ? b.wholesalePrice : 0;
     if (b.mistriPrice != null) validateMistriPrice(b.mistriPrice, b.retailPrice, wholesalePrice);
+    const shopId = shopIdForCreate(req, b.shopId);
     const sku = await db.sku.create({
       data: {
+        shopId,
         name: b.name,
         brand: b.brand ?? null,
         modelCompat: b.modelCompat ?? null,
@@ -73,7 +86,7 @@ skus.patch(
     if (Object.keys(data).length === 0) throw new HttpError(400, "no fields to update");
 
     const existing = await db.sku.findUnique({ where: { id: req.params.id } });
-    if (!existing) throw new HttpError(404, "SKU not found");
+    if (!existing || !canAccess(req, existing.shopId)) throw new HttpError(404, "SKU not found");
     if (data.mistriPrice != null) {
       const retail = (data.retailPrice as number) ?? existing.retailPrice;
       const wholesale = (data.wholesalePrice as number) ?? existing.wholesalePrice;
