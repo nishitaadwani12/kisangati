@@ -17,12 +17,16 @@
   manual **UPI QR** + **UTR-required** payment confirm, OTP dispatch/delivery, mistri cashback.
 - **Two-tier pricing** (farmer vs mistri) with guardrails; **organic catalog** (autocomplete +
   duplicate-proof match-key — no onboarding/stock chore).
+- **WhatsApp intake:** public webhook (token-verified) → routes to a shop by `phone_number_id`,
+  creates a `RECEIVED` order from text/voice/photo, dedupes retries, sends a Hindi auto-reply.
+  (Media *download* still deferred — we store the media id.)
 - **React/Vite admin dashboard**: login, orders inbox + detail workflow, catalog, customers,
   home stats, super-admin **Shops** page + shop switcher, **HI|EN** language toggle.
 - Money stored in **paise** (integers) throughout. Demo seed across two shops.
 
-**Not built yet (planned):** WhatsApp intake, the `ml-service` (part-ID + STT), the Flutter
-customer app, Redis, Razorpay auto-confirm, object storage, deployment. Multi-tenant data
+**Not built yet (planned):** WhatsApp **media download** (voice/photo files — the id is stored),
+the `ml-service` (part-ID + STT), the Flutter customer app, Redis, Razorpay auto-confirm,
+object storage, deployment. Multi-tenant data
 isolation is **already built** (ahead of the original "long-term" plan) because a relative's
 shop will be onboarded as a real second tenant for end-to-end testing.
 
@@ -97,7 +101,7 @@ Single shared database. Every order and user is tagged for audit/analytics (see 
 | Backend/API | **Node.js + TypeScript + Express** | REST + JSON. **[BUILT]** All money handled in **paise** (integers) — no floats. |
 | Database | **Prisma**; **SQLite now** → PostgreSQL later | **[BUILT on SQLite]** Enum-like columns are strings and JSON columns are strings for SQLite portability; Prisma makes the Postgres switch trivial. |
 | Queue/cache | **Redis** | **[PLANNED]** Async jobs (media download, WhatsApp send retries, payment reconciliation), OTP + session cache. Not wired yet. |
-| WhatsApp | **Meta WhatsApp Cloud API** | **[PLANNED]** Free sandbox for prototype; move to a BSP (e.g. AiSensy) only if templated marketing at scale is needed. |
+| WhatsApp | **Meta WhatsApp Cloud API** | **[BUILT — intake + auto-reply]** Public webhook, token-verified GET, per-shop routing by `phone_number_id`, dedupe on message id, Hindi auto-ack. Media *download* deferred. Move to a BSP (e.g. AiSensy) only if templated marketing at scale is needed. |
 | Payments | **Manual UPI QR** → Razorpay-ready | **[BUILT]** Send a UPI QR / `upi://` link, staff **confirm manually with a required UTR** (forces verifying the transfer landed — a screenshot is not proof). No COD. `payments` table stores `method`, `utr`, `confirmed_by` so **Razorpay dynamic QR + webhook auto-confirm** drops in later as a config change. |
 | Auth | **Email + password (bcrypt) → JWT** | **[BUILT]** Dashboard login accounts (`AdminUser`); roles `SUPER_ADMIN` / `OWNER` / `STAFF`; all `/api` routes shop-scoped. Customer app auth (phone+OTP) is separate and **[PLANNED]**. |
 | Dashboard i18n | In-app **HI \| EN** toggle | **[BUILT]** Persisted per browser; full Hindi for nav, labels, statuses. |
@@ -151,10 +155,10 @@ Lets us measure app adoption vs WhatsApp over time and protect mistri attributio
 
 ## 7. Features by surface
 
-**WhatsApp (farmers, kickoff channel):** text/voice/photo intake → Hindi auto-ack → order
-summary + **Confirm** button (interactive message) → **UPI QR / `upi://` link in the chat**
-→ OTP on dispatch → delivery confirmation. No UI to learn. WhatsApp carries the QR; it is
-not the payment processor.
+**WhatsApp (farmers, kickoff channel):** text/voice/photo intake → Hindi auto-ack **[BUILT]** →
+order summary + **Confirm** button + **UPI QR / `upi://` link in the chat** → OTP on dispatch →
+delivery confirmation **[PLANNED — needs a live number/templates]**. No UI to learn. WhatsApp
+carries the QR; it is not the payment processor.
 
 **App — FARMER mode:** voice-note / photo ordering, big icons, Hindi voice UI, order
 tracking + push. Deliberately as simple as WhatsApp.
@@ -193,7 +197,8 @@ Prove the order → pay → dispatch loop with real money before building the po
 2. **Web admin dashboard (React/Vite)** — process real orders; catalog; walk-in onboarding. **[DONE]**
 3. **Multi-tenant auth** — Shop/AdminUser, JWT, roles, shop isolation, super-admin onboarding.
    **[DONE]** (pulled forward — a relative's shop is a real second tenant for testing).
-4. **WhatsApp intake** — farmers, no app needed. Proves demand end-to-end. **[NEXT]**
+4. **WhatsApp intake** — farmers, no app needed. Webhook → order + Hindi auto-reply. **[DONE]**
+   (media download + in-chat UPI QR delivery are the remaining pieces.)
 5. **`ml-service` Phase 1 (in parallel)** — Python service with a multimodal-LLM + catalog-RAG
    part suggester to assist staff. Real accuracy still depends on the real-photo dataset. **[PLANNED]**
 6. **Farmer + Mistri app modes** — built on a backend already proven with real orders. **[PLANNED]**

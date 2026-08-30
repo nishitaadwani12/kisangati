@@ -3,6 +3,7 @@ import express, { NextFunction, Request, Response } from "express";
 import { HttpError } from "./lib/http";
 import { authRequired } from "./middleware/auth";
 import { auth } from "./routes/auth";
+import { webhook } from "./routes/webhook";
 import { shops } from "./routes/shops";
 import { orders } from "./routes/orders";
 import { skus } from "./routes/skus";
@@ -18,6 +19,7 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", service: "kisangati", ts: new Date().toISOString() });
 });
 
+app.use("/webhook", webhook); // public — Meta WhatsApp Cloud API (verify token, not JWT)
 app.use("/api/auth", auth); // public (login) + /me (self-guarded)
 app.use("/api/shops", authRequired, shops);
 app.use("/api/orders", authRequired, orders);

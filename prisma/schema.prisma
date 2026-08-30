@@ -13,10 +13,11 @@ datasource db {
 }
 
 model Shop {
-  id        String   @id @default(cuid())
-  name      String
-  town      String?
-  createdAt DateTime @default(now())
+  id                    String   @id @default(cuid())
+  name                  String
+  town                  String?
+  whatsappPhoneNumberId String?  @unique // Meta Cloud API phone_number_id → routes inbound messages to this shop
+  createdAt             DateTime @default(now())
 
   admins    AdminUser[]
   users     User[]
@@ -69,6 +70,7 @@ model Order {
   model        String?
   status       String   @default("RECEIVED") // RECEIVED|QUOTED|PAID|PACKED|DISPATCHED|DELIVERED|CANCELLED
   cancelReason String?
+  waMessageId  String?  @unique // WhatsApp message id — dedupes Meta's webhook retries
   subtotal     Int      @default(0) // paise
   deliveryFee  Int      @default(0) // paise
   total        Int      @default(0) // paise
