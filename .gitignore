@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Local prototype data (keep father's real shop data out of git)
+media/
+*.sqlite
+*.db
