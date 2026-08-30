@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { sendText, ACK_HINDI } from "../lib/whatsapp";
+import { sendText, ACK_HINDI, downloadMedia } from "../lib/whatsapp";
 
 // PUBLIC endpoint — Meta calls this; it is NOT behind auth. Verified by a token on GET.
 export const webhook = Router();
@@ -28,15 +28,15 @@ async function resolveShopId(phoneNumberId?: string): Promise<string | null> {
   return null;
 }
 
-// Extract a display string + media id from a Meta message object.
-function parseMessage(msg: any): { rawText: string; mediaUrl: string | null } {
+// Extract a display string + raw media id (if any) from a Meta message object.
+function parseMessage(msg: any): { rawText: string; mediaId: string | null } {
   switch (msg.type) {
-    case "text": return { rawText: msg.text?.body ?? "", mediaUrl: null };
-    case "image": return { rawText: msg.image?.caption ? `[photo] ${msg.image.caption}` : "[photo]", mediaUrl: `wa-media:${msg.image?.id}` };
-    case "audio": return { rawText: "[voice note]", mediaUrl: `wa-media:${msg.audio?.id}` };
-    case "video": return { rawText: "[video]", mediaUrl: `wa-media:${msg.video?.id}` };
-    case "document": return { rawText: "[document]", mediaUrl: `wa-media:${msg.document?.id}` };
-    default: return { rawText: `[${msg.type}]`, mediaUrl: null };
+    case "text": return { rawText: msg.text?.body ?? "", mediaId: null };
+    case "image": return { rawText: msg.image?.caption ? `[photo] ${msg.image.caption}` : "[photo]", mediaId: msg.image?.id ?? null };
+    case "audio": return { rawText: "[voice note]", mediaId: msg.audio?.id ?? null };
+    case "video": return { rawText: "[video]", mediaId: msg.video?.id ?? null };
+    case "document": return { rawText: "[document]", mediaId: msg.document?.id ?? null };
+    default: return { rawText: `[${msg.type}]`, mediaId: null };
   }
 }
 
@@ -61,7 +61,7 @@ webhook.post("/", async (req, res) => {
             if (msg.id && (await db.order.findUnique({ where: { waMessageId: msg.id } }))) continue;
 
             const from: string = msg.from;
-            const { rawText, mediaUrl } = parseMessage(msg);
+            const { rawText, mediaId } = parseMessage(msg);
 
             // Upsert customer within this shop (phone unique per shop). Set name only if new.
             let user = await db.user.findUnique({ where: { shopId_phone: { shopId, phone: from } } });
@@ -69,11 +69,17 @@ webhook.post("/", async (req, res) => {
               user = await db.user.create({ data: { shopId, phone: from, name: contactName ?? null, userType: "FARMER", acquisitionChannel: "WHATSAPP" } });
             }
 
-            await db.order.create({
-              data: { shopId, userId: user.id, orderSource: "WHATSAPP", rawText, mediaUrl, waMessageId: msg.id ?? null, status: "RECEIVED" },
+            // Create the order first (captured even if media download fails); keep the media id as fallback.
+            const order = await db.order.create({
+              data: { shopId, userId: user.id, orderSource: "WHATSAPP", rawText, mediaUrl: mediaId ? `wa-media:${mediaId}` : null, waMessageId: msg.id ?? null, status: "RECEIVED" },
             });
 
+            // Reply immediately, then fetch the actual media file and attach a playable/viewable path.
             if (phoneNumberId) await sendText(phoneNumberId, from, ACK_HINDI);
+            if (mediaId) {
+              const dl = await downloadMedia(mediaId);
+              if (dl) await db.order.update({ where: { id: order.id }, data: { mediaUrl: dl.publicUrl } });
+            }
           } catch (e) {
             console.error("[whatsapp] message handling error", (e as Error).message);
           }

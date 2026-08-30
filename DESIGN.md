@@ -18,15 +18,15 @@
 - **Two-tier pricing** (farmer vs mistri) with guardrails; **organic catalog** (autocomplete +
   duplicate-proof match-key — no onboarding/stock chore).
 - **WhatsApp intake:** public webhook (token-verified) → routes to a shop by `phone_number_id`,
-  creates a `RECEIVED` order from text/voice/photo, dedupes retries, sends a Hindi auto-reply.
-  (Media *download* still deferred — we store the media id.)
+  creates a `RECEIVED` order from text/voice/photo, dedupes retries, sends a Hindi auto-reply,
+  and **downloads the voice/photo file** (stored under `/media`, playable/viewable in the dashboard).
 - **React/Vite admin dashboard**: login, orders inbox + detail workflow, catalog, customers,
   home stats, super-admin **Shops** page + shop switcher, **HI|EN** language toggle.
 - Money stored in **paise** (integers) throughout. Demo seed across two shops.
 
-**Not built yet (planned):** WhatsApp **media download** (voice/photo files — the id is stored),
-the `ml-service` (part-ID + STT), the Flutter customer app, Redis, Razorpay auto-confirm,
-object storage, deployment. Multi-tenant data
+**Not built yet (planned):** the `ml-service` (part-ID + STT), the Flutter customer app, Redis,
+Razorpay auto-confirm, object storage (media is on local disk for now), in-chat UPI QR delivery,
+deployment. Multi-tenant data
 isolation is **already built** (ahead of the original "long-term" plan) because a relative's
 shop will be onboarded as a real second tenant for end-to-end testing.
 

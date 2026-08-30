@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
 import { HttpError } from "./lib/http";
+import { MEDIA_DIR } from "./lib/whatsapp";
 import { authRequired } from "./middleware/auth";
 import { auth } from "./routes/auth";
 import { webhook } from "./routes/webhook";
@@ -18,6 +19,10 @@ const PORT = Number(process.env.PORT) || 3000;
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok", service: "kisangati", ts: new Date().toISOString() });
 });
+
+// Downloaded WhatsApp media (voice/photos). Public static — filenames are unguessable media ids.
+// (Production: move behind signed URLs / object storage.)
+app.use("/media", express.static(MEDIA_DIR));
 
 app.use("/webhook", webhook); // public — Meta WhatsApp Cloud API (verify token, not JWT)
 app.use("/api/auth", auth); // public (login) + /me (self-guarded)

@@ -1,6 +1,6 @@
 # Spec — WhatsApp Intake
 
-**Component:** Meta WhatsApp Cloud API webhook → auto-creates orders. **[BUILT]** (media download deferred).
+**Component:** Meta WhatsApp Cloud API webhook → auto-creates orders (incl. media download). **[BUILT]**
 **Why:** the farmer-facing half of the money loop — a farmer messages the shop's WhatsApp number and an
 order appears in the dashboard, with an automatic Hindi acknowledgement.
 
@@ -19,6 +19,10 @@ order appears in the dashboard, with an automatic Hindi acknowledgement.
 5. **Create order** (`status=RECEIVED`, `order_source=WHATSAPP`): text → `raw_text`; image/audio/etc. →
    a marker in `raw_text` (`[photo]`, `[voice note]`) + the media id in `media_url` as `wa-media:<id>`.
 6. **Auto-reply** the Hindi ack via the Cloud API (`sendText`). Skipped with a log if no access token (dev).
+7. **Download media** (voice/photo): fetch the file (2 steps: media id → short-lived URL → bytes), store
+   under `media/<id>.<ext>` (gitignored), and update `order.media_url` to `/media/<file>` — served by the
+   API and rendered/playable in the dashboard. If download fails (no token), the order keeps the
+   `wa-media:<id>` fallback and nothing breaks.
 
 ## Config (.env)
 `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_GRAPH_VERSION`
@@ -29,8 +33,6 @@ Each shop has its own WhatsApp number → its own `phone_number_id`, so inbound 
 shop automatically. The seed sets Satram Tractors' number to `TEST_PNID_SHOP1` for local testing.
 
 ## Deferred (not built)
-- **Media retrieval** — downloading the actual `.ogg`/photo from the media id to disk/object storage
-  (we store the id for now; a human/AI fetches later). Matches CLAUDE.md Step 6.
 - Interactive Confirm button + in-chat UPI QR delivery (needs a live number + templates).
 - `X-Hub-Signature-256` payload signature verification (add before production).
 - Outbound status/OTP/delivery notifications to the farmer.
