@@ -84,6 +84,7 @@ model Payment {
   order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   method      String    @default("MANUAL_UPI_QR") // MANUAL_UPI_QR | RAZORPAY
   providerRef String? // razorpay link/QR id (later)
+  utr         String? // UPI reference / UTR from the payer's transfer — captured at manual confirm for audit
   amount      Int // paise
   status      String    @default("PENDING") // PENDING | CONFIRMED
   confirmedBy String? // staff id (manual confirm)

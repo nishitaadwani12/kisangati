@@ -111,10 +111,16 @@ orders.post(
   })
 );
 
-// POST /api/orders/:id/payment/confirm — manual confirmation. body: { confirmedBy }
+// POST /api/orders/:id/payment/confirm — manual confirmation.
+// body: { utr, confirmedBy }. UTR is REQUIRED: staff must read the UPI reference off the actual
+// "money received" notification, which enforces verifying the transfer really landed (not a screenshot).
 orders.post(
   "/:id/payment/confirm",
   ah(async (req, res) => {
+    const utr = String(req.body?.utr ?? "").trim();
+    if (!utr) throw new HttpError(400, "utr is required — enter the UPI reference from the payment-received notification after verifying the amount");
+    if (!/^[A-Za-z0-9]{6,32}$/.test(utr)) throw new HttpError(400, "utr looks invalid (expected 6–32 alphanumeric characters)");
+
     const order = await db.order.findUnique({ where: { id: req.params.id }, include: { payment: true } });
     if (!order) throw new HttpError(404, "Order not found");
     if (!order.payment) throw new HttpError(400, "No payment to confirm — quote the order first");
@@ -124,11 +130,11 @@ orders.post(
     await db.$transaction([
       db.payment.update({
         where: { orderId: order.id },
-        data: { status: "CONFIRMED", confirmedBy: req.body?.confirmedBy ?? "staff", confirmedAt: now, paidAt: now },
+        data: { status: "CONFIRMED", utr, confirmedBy: req.body?.confirmedBy ?? "staff", confirmedAt: now, paidAt: now },
       }),
       db.order.update({ where: { id: order.id }, data: { status: "PAID" } }),
     ]);
-    res.json({ orderId: order.id, status: "PAID" });
+    res.json({ orderId: order.id, status: "PAID", utr });
   })
 );
 

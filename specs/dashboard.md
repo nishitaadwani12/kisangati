@@ -29,8 +29,11 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 
 ### 2. Payments
 - **[MVP]** **Mark payment received** (manual confirm) → unlocks packing; records who/when.
-- **[MVP]** Payment status per order (pending / confirmed).
-- **[Later]** Auto-confirm via Razorpay webhook (no manual step).
+- **[MVP]** Confirming **requires the UTR / UPI reference number** — staff read it off their own
+  "money received" notification, which forces verifying the amount actually landed (a screenshot is
+  NOT trusted as proof). UTR is stored on the payment for auditing.
+- **[MVP]** Payment status per order (pending / confirmed), with UTR + confirmer visible.
+- **[Later]** Auto-confirm via Razorpay webhook (no manual step) — the stored UTR makes this switch seamless.
 
 ### 3. Inventory & catalog
 - **[MVP]** SKU list: brand, model fit, retail price, wholesale cost, weight, **stock count**.
