@@ -9,20 +9,26 @@ component specs, and [`docs/`](docs/) for the business plan.
 - **Admin dashboard** — React + Vite, in `web/`.
 
 ## Run locally
-Two terminals:
 
+First-time setup:
 ```bash
-# 1) Backend API (http://localhost:3000)
-cp .env.example .env          # first time only; fill values as needed
-npm install
-npx prisma migrate dev        # first time only — creates the SQLite DB
-npm run dev
-
-# 2) Admin dashboard (http://localhost:5173, proxies /api to the backend)
-cd web
-npm install
-npm run dev
+cp .env.example .env          # fill values as needed
+npm install                   # backend deps (auto-runs prisma generate)
+npm --prefix web install      # dashboard deps
+npx prisma migrate dev        # creates the SQLite DB
 ```
+
+Then start everything with **one command** (from the repo root):
+```bash
+npm run dev:all               # runs API (:3000) + dashboard (:5173) together
+```
+
+Both auto-reload on save — the API restarts on `src/` changes, the dashboard hot-reloads in the browser.
+You do **not** re-run this after code edits. (Prefer separate terminals? `npm run dev` here and
+`npm run dev` in `web/`.)
+
+> Exception: after changing `prisma/schema.prisma`, run `npx prisma migrate dev` (or `npx prisma generate`)
+> and restart, since the generated client lives outside `src/` and isn't watched.
 
 Open http://localhost:5173.
 
