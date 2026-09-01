@@ -20,6 +20,9 @@ import { app as appRoutes } from "./routes/app";
 
 const app = express();
 
+// Behind a reverse proxy/LB in prod, trust the first hop so req.ip (and rate-limiting) use the real client IP.
+if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
+
 // Security headers. crossOriginResourcePolicy relaxed so the app/dashboard can load /media cross-origin.
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
