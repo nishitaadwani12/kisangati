@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Thin client for the KisanGati customer API. Money is in paise.
 class Api {
-  // Chrome/web dev → localhost. For an Android emulator use http://10.0.2.2:3000
-  static const String base = 'http://localhost:3000';
+  // Web (Chrome) reaches the host directly; the Android emulator reaches the host via 10.0.2.2.
+  static const String base = kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
   static String? token;
 
   static Future<void> loadToken() async {
