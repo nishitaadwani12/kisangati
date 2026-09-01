@@ -1,4 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 import 'api.dart';
 
 void main() async {
@@ -214,31 +218,93 @@ class NewOrderTab extends StatefulWidget {
 
 class _NewOrderTabState extends State<NewOrderTab> {
   final _text = TextEditingController();
+  final _recorder = AudioRecorder();
+  List<int>? _bytes; // attachment bytes
+  String? _attachName;
+  String? _attachKind; // 'photo' | 'voice'
+  bool _recording = false;
   String _msg = '';
   String _err = '';
   bool _busy = false;
 
+  @override
+  void dispose() { _recorder.dispose(); super.dispose(); }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    setState(() { _err = ''; });
+    try {
+      final XFile? img = await ImagePicker().pickImage(source: source, imageQuality: 70, maxWidth: 1600);
+      if (img == null) return;
+      final b = await img.readAsBytes();
+      setState(() { _bytes = b; _attachName = img.name; _attachKind = 'photo'; });
+    } catch (e) { setState(() => _err = '$e'); }
+  }
+
+  Future<void> _toggleRecord() async {
+    setState(() { _err = ''; });
+    try {
+      if (_recording) {
+        final out = await _recorder.stop();
+        setState(() => _recording = false);
+        if (out != null) {
+          final b = await XFile(out).readAsBytes();
+          setState(() { _bytes = b; _attachName = 'voice.m4a'; _attachKind = 'voice'; });
+        }
+      } else {
+        if (!await _recorder.hasPermission()) { setState(() => _err = 'Microphone permission denied'); return; }
+        String path = '';
+        if (!kIsWeb) { final dir = await getTemporaryDirectory(); path = '${dir.path}/order_${DateTime.now().millisecondsSinceEpoch}.m4a'; }
+        await _recorder.start(const RecordConfig(), path: path);
+        setState(() { _recording = true; });
+      }
+    } catch (e) { setState(() { _err = '$e'; _recording = false; }); }
+  }
+
+  void _clearAttach() => setState(() { _bytes = null; _attachName = null; _attachKind = null; });
+
   Future<void> _send() async {
     setState(() { _msg = ''; _err = ''; _busy = true; });
     try {
-      await Api.placeOrder(rawText: _text.text.trim());
-      setState(() { _msg = 'Order sent! The shop will confirm the price shortly.'; _text.clear(); });
+      String? mediaUrl;
+      if (_bytes != null) mediaUrl = await Api.uploadMedia(_bytes!, _attachName ?? 'attachment');
+      final text = _text.text.trim();
+      if (text.isEmpty && mediaUrl == null) { setState(() { _err = 'Add a description, a photo, or a voice note.'; _busy = false; }); return; }
+      await Api.placeOrder(rawText: text.isEmpty ? null : text, mediaUrl: mediaUrl);
+      setState(() { _msg = 'Order sent! The shop will confirm the price shortly.'; _text.clear(); _clearAttach(); });
     } catch (e) { setState(() => _err = '$e'); }
     finally { setState(() => _busy = false); }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         const Text('Describe the part you need', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        TextField(controller: _text, maxLines: 4, decoration: const InputDecoration(hintText: 'e.g. Swaraj 855 clutch plate', border: OutlineInputBorder())),
+        TextField(controller: _text, maxLines: 3, decoration: const InputDecoration(hintText: 'e.g. Swaraj 855 clutch plate', border: OutlineInputBorder())),
         const SizedBox(height: 12),
-        FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.send), label: const Text('Send order')),
+        const Text('…or attach a photo / voice note', style: TextStyle(color: Colors.black54)),
         const SizedBox(height: 8),
-        const Text('Voice note & photo ordering coming soon.', style: TextStyle(color: Colors.black45, fontSize: 12)),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          if (!kIsWeb) OutlinedButton.icon(onPressed: _busy ? null : () => _pickPhoto(ImageSource.camera), icon: const Icon(Icons.photo_camera), label: const Text('Camera')),
+          OutlinedButton.icon(onPressed: _busy ? null : () => _pickPhoto(ImageSource.gallery), icon: const Icon(Icons.image), label: const Text('Photo')),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : _toggleRecord,
+            icon: Icon(_recording ? Icons.stop : Icons.mic, color: _recording ? Colors.red : null),
+            label: Text(_recording ? 'Stop' : 'Voice note'),
+          ),
+        ]),
+        if (_attachName != null) Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Chip(
+            avatar: Icon(_attachKind == 'voice' ? Icons.mic : Icons.image, size: 18),
+            label: Text(_attachKind == 'voice' ? 'Voice note attached' : (_attachName ?? 'Photo')),
+            onDeleted: _clearAttach,
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.send), label: Text(_busy ? 'Sending…' : 'Send order')),
         if (_msg.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_msg, style: const TextStyle(color: green))),
         if (_err.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_err, style: const TextStyle(color: Colors.red))),
       ]),

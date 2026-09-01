@@ -61,16 +61,27 @@ class Api {
   static Future<List> catalog(String q) async =>
       await _get('/app/catalog${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}') as List;
 
-  static Future<Map> placeOrder({List<Map<String, dynamic>>? items, String? rawText}) async {
+  static Future<Map> placeOrder({List<Map<String, dynamic>>? items, String? rawText, String? mediaUrl}) async {
     final body = <String, dynamic>{};
     if (items != null) body['items'] = items;
     if (rawText != null) body['rawText'] = rawText;
+    if (mediaUrl != null) body['mediaUrl'] = mediaUrl;
     return await _post('/app/orders', body) as Map;
   }
 
   static Future<List> orders() async => await _get('/app/orders') as List;
 
   static Future<Map> wallet() async => await _get('/app/wallet') as Map;
+
+  /// Upload a voice note / photo (bytes) → returns the stored /media URL.
+  static Future<String> uploadMedia(List<int> bytes, String filename) async {
+    final req = http.MultipartRequest('POST', Uri.parse('$base/app/media'));
+    if (token != null) req.headers['Authorization'] = 'Bearer $token';
+    req.files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename));
+    final res = await http.Response.fromStream(await req.send());
+    final data = _handle(res) as Map;
+    return data['url'] as String;
+  }
 }
 
 String rupees(num paise) => '₹${(paise / 100).toStringAsFixed((paise % 100 == 0) ? 0 : 2)}';
