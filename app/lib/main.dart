@@ -16,6 +16,53 @@ void main() async {
 
 const green = Color(0xFF1F7A4D);
 
+Color _statusColor(String s) {
+  switch (s) {
+    case 'QUOTED': return const Color(0xFFB7791F);
+    case 'PAID': return const Color(0xFF0B6B53);
+    case 'PACKED': return const Color(0xFF1D4ED8);
+    case 'DISPATCHED': return const Color(0xFF6D28D9);
+    case 'DELIVERED': return green;
+    case 'CANCELLED': return const Color(0xFFB91C1C);
+    default: return const Color(0xFF6B7280); // RECEIVED / unknown
+  }
+}
+
+class StatusChip extends StatelessWidget {
+  final String status;
+  const StatusChip(this.status, {super.key});
+  @override
+  Widget build(BuildContext context) {
+    final c = _statusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withValues(alpha: 0.4))),
+      child: Text(t('status.$status'), style: TextStyle(color: c, fontWeight: FontWeight.w600, fontSize: 12)),
+    );
+  }
+}
+
+class EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? hint;
+  const EmptyState({super.key, required this.icon, required this.title, this.hint});
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 56, color: Colors.black26),
+          const SizedBox(height: 12),
+          Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54), textAlign: TextAlign.center),
+          if (hint != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(hint!, style: const TextStyle(color: Colors.black38), textAlign: TextAlign.center)),
+        ]),
+      ),
+    );
+  }
+}
+
 class KisanGatiApp extends StatefulWidget {
   const KisanGatiApp({super.key});
   @override
@@ -200,7 +247,12 @@ class _OrdersTabState extends State<OrdersTab> {
   Widget build(BuildContext context) {
     if (_err.isNotEmpty) return Center(child: Text(_err));
     if (_orders == null) return const Center(child: CircularProgressIndicator());
-    if (_orders!.isEmpty) return Center(child: Text(t('noOrders')));
+    if (_orders!.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(children: [SizedBox(height: 120), EmptyState(icon: Icons.receipt_long, title: t('noOrders'), hint: t('ordersEmptyHint'))]),
+      );
+    }
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -208,10 +260,10 @@ class _OrdersTabState extends State<OrdersTab> {
           final total = (o['total'] ?? 0) as int;
           final hasMedia = (o['mediaUrl'] as String?)?.startsWith('/media') ?? false;
           return ListTile(
-            leading: hasMedia ? Icon(_isAudio(o['mediaUrl']) ? Icons.mic : Icons.image, color: green) : null,
+            leading: hasMedia ? Icon(_isAudio(o['mediaUrl']) ? Icons.mic : Icons.image, color: green) : const Icon(Icons.receipt_long, color: Colors.black26),
             title: Text(o['rawText'] ?? t('nItems').replaceFirst('{n}', '${(o['items'] as List).length}')),
-            subtitle: Text(t('status.${o['status']}')),
-            trailing: Text(total > 0 ? rupees(total) : '—'),
+            subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Align(alignment: Alignment.centerLeft, child: StatusChip(o['status']))),
+            trailing: Text(total > 0 ? rupees(total) : '—', style: const TextStyle(fontWeight: FontWeight.w600)),
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => OrderDetailScreen(order: o))),
           );
         }).toList(),
@@ -265,7 +317,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       appBar: AppBar(backgroundColor: green, foregroundColor: Colors.white, title: Text('${t('orderTitle')} #${(o['id'] as String).substring((o['id'] as String).length - 6)}')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Row(children: [
-          Chip(label: Text(t('status.${o['status']}'))),
+          StatusChip(o['status']),
           const Spacer(),
           if (total > 0) Text(rupees(total), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ]),
@@ -381,6 +433,16 @@ class _NewOrderTabState extends State<NewOrderTab> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(color: const Color(0xFFE6F6F0), borderRadius: BorderRadius.circular(10)),
+          child: Row(children: [
+            const Icon(Icons.info_outline, color: green),
+            const SizedBox(width: 10),
+            Expanded(child: Text(t('newOrderHint'), style: const TextStyle(color: Colors.black87))),
+          ]),
+        ),
         Text(t('describePart'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(controller: _text, maxLines: 3, decoration: InputDecoration(hintText: t('hintPart'), border: const OutlineInputBorder())),
@@ -454,7 +516,7 @@ class _CatalogTabState extends State<CatalogTab> {
   Widget build(BuildContext context) {
     if (_err.isNotEmpty) return Center(child: Text(_err));
     if (_skus == null) return const Center(child: CircularProgressIndicator());
-    if (_skus!.isEmpty) return Center(child: Text(t('noParts')));
+    if (_skus!.isEmpty) return EmptyState(icon: Icons.inventory_2_outlined, title: t('noParts'));
     return Column(children: [
       Expanded(child: ListView(
         children: _skus!.map<Widget>((s) {
