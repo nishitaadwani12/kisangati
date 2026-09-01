@@ -45,9 +45,11 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 - **[Optional/Later]** Stock counts + low-stock flag (kept, not required); wholesaler reorder tracking.
 
 ### 4. Dispatch & delivery
-- **[MVP]** Generate **thermal shipping label**: bus route + conductor + 4-digit **OTP**.
-- **[MVP]** Assign route/conductor; mark **dispatched**.
-- **[MVP]** Confirm **delivered** (OTP claimed) → triggers mistri cashback if applicable.
+- **[MVP]** Record **bus route + conductor**; mark **dispatched**.
+- **[MVP]** Staff **notify the customer** which bus the parcel is on (manual call/WhatsApp now; auto-WhatsApp later).
+- **[MVP]** Mark **delivered** once the customer confirms receipt → triggers mistri cashback if applicable.
+- **No OTP** — dropped: there's no village-side checkpoint to verify a code and payment is already collected
+  upfront, so it would only add friction for low-literacy farmers.
 
 ### 5. Customers & onboarding
 - **[MVP]** Customer list: phone, name, type (farmer/mistri), acquisition channel, order history.
@@ -83,8 +85,8 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 | POST | `/api/orders/:id/items` | Add/update matched SKU line items + price. |
 | POST | `/api/orders/:id/quote` | Send order summary + UPI QR to WhatsApp; set status QUOTED. |
 | POST | `/api/orders/:id/payment/confirm` | Mark payment received (manual). |
-| POST | `/api/orders/:id/dispatch` | Assign route/conductor, generate OTP + label; status DISPATCHED. |
-| POST | `/api/orders/:id/deliver` | Confirm OTP delivered; credit mistri cashback. |
+| POST | `/api/orders/:id/dispatch` | Record route/conductor; status DISPATCHED. |
+| POST | `/api/orders/:id/deliver` | Mark delivered (staff-confirmed); credit mistri cashback. |
 | GET/POST/PATCH | `/api/skus` | Catalog CRUD + stock. |
 | GET/POST | `/api/customers` | Customer list + walk-in create. |
 | GET | `/api/stats/today` | Home dashboard numbers. |

@@ -92,8 +92,8 @@ export const api = {
   confirmPayment: (id: string, utr: string, confirmedBy: string) =>
     req<{ status: string }>(`/orders/${id}/payment/confirm`, "POST", { utr, confirmedBy }),
   dispatch: (id: string, busRoute: string, conductorName: string) =>
-    req<{ otp: string }>(`/orders/${id}/dispatch`, "POST", { busRoute, conductorName }),
-  deliver: (id: string, otp: string) => req<{ cashbackPaise: number }>(`/orders/${id}/deliver`, "POST", { otp }),
+    req<{ status: string; busRoute: string; conductorName: string }>(`/orders/${id}/dispatch`, "POST", { busRoute, conductorName }),
+  deliver: (id: string) => req<{ cashbackPaise: number }>(`/orders/${id}/deliver`, "POST", {}),
 
   skus: (q?: string) => req<Sku[]>(`/skus${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   createSku: (b: Partial<Sku> & { name: string; retailPrice: number }) => req<Sku>("/skus", "POST", b),

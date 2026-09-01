@@ -14,7 +14,8 @@
   `SUPER_ADMIN` / `OWNER` / `STAFF`; every `/api` route shop-scoped (cross-shop → 404).
   Controlled onboarding via a super-admin **Add-shop** flow (no public self-sign-up).
 - **Order lifecycle** end-to-end: `RECEIVED → QUOTED → PAID → DISPATCHED → DELIVERED`, with
-  manual **UPI QR** + **UTR-required** payment confirm, OTP dispatch/delivery, mistri cashback.
+  manual **UPI QR** + **UTR-required** payment confirm, dispatch (bus route + conductor),
+  staff-confirmed delivery (**no OTP** — see §6), and mistri cashback.
 - **Two-tier pricing** (farmer vs mistri) with guardrails; **organic catalog** (autocomplete +
   duplicate-proof match-key — no onboarding/stock chore).
 - **WhatsApp intake:** public webhook (token-verified) → routes to a shop by `phone_number_id`,
@@ -51,7 +52,7 @@ There are **two kinds of identity** (don't conflate them):
 |---|---|---|
 | `FARMER` (customer) | Customer app + WhatsApp | Zero-friction: voice-note / photo ordering, big icons, Hindi voice UI. |
 | `MISTRI` (customer) | Customer app | Full catalog by brand/model, cart, reorder, **wallet/cashback (3–5%)**, referrals. |
-| `OWNER` / `STAFF` (login) | Web dashboard | Their shop only: inbox, part match, UPI QR + manual confirm, thermal label, dispatch/deliver, walk-in onboarding, analytics. |
+| `OWNER` / `STAFF` (login) | Web dashboard | Their shop only: inbox, part match, UPI QR + manual confirm, dispatch (route + conductor), mark delivered, walk-in onboarding, analytics. |
 | `SUPER_ADMIN` (login) | Web dashboard | Network-wide view across all shops + shop switcher; onboards new shops. |
 
 **Walk-in onboarding (first-class flow):** at the counter, staff create the user and
@@ -124,13 +125,12 @@ schema today; **[PLANNED]** are designed but not yet created.
 - **order_items** **[BUILT]** — `id, order_id, sku_id, qty, unit_price` (price snapshotted per line, so history is stable)
 - **skus** **[BUILT]** — `id, shop_id, match_key, name, brand, model_compat, category, retail_price (farmer), mistri_price (nullable — else auto-discount), wholesale_price, weight_g, stock_qty, created_at`. **`match_key`** is a normalized (case/space/punctuation-insensitive) key with `@@unique(shop_id, match_key)` for **duplicate-proof find-or-create** (see §7 organic catalog). **Two-tier pricing:** farmer=`retail_price`, mistri=`mistri_price` (guardrail: wholesale ≤ mistri ≤ retail).
 - **payments** **[BUILT]** — `id, order_id, method (MANUAL_UPI_QR|RAZORPAY), provider_ref (nullable — razorpay id), utr (UPI reference, required at manual confirm — audit), amount, status (PENDING|CONFIRMED), confirmed_by, confirmed_at, paid_at`.
-- **deliveries** **[BUILT]** — `id, order_id, bus_route, conductor_name, otp_hash, dispatched_at, claimed_at`
+- **deliveries** **[BUILT]** — `id, order_id, bus_route, conductor_name, dispatched_at, claimed_at` (`otp_hash` column retained but **deprecated/unused** — OTP-at-stop was dropped)
 - **wallet_txns** **[BUILT]** — `id, mistri_id, order_id, type (CASHBACK|PAYOUT), amount, created_at` — **commission rule (locked): a mistri earns cashback ONLY on orders they place through the app.** Referred farmers ordering directly do not generate mistri commission.
 - **part_predictions** **[BUILT — table exists, unused until AI]** — `id, order_id, model_version, predicted_sku_id, brand, part_category, predicted_specs (JSON string), confidence, input_media_url, transcript, created_at`
 - **training_examples** **[BUILT — table exists, unused until AI]** — `id, media_url, transcript, resolved_sku_id, resolved_specs (JSON string), labeled_by, source_order_id, split (train|val|test), created_at`
 
-Rules: **OTP stored hashed**, never plaintext. Prices/margins/real client phone numbers
-live in the DB, **never in git**. Farmer photos/voice notes used for training require a
+Rules: prices/margins/real client phone numbers live in the DB, **never in git**. Farmer photos/voice notes used for training require a
 **clear consent notice** at onboarding. Commercial params (delivery fee, free-delivery
 threshold, cashback %, mistri discount %) are **env-configurable**, not hardcoded.
 
@@ -149,15 +149,15 @@ Lets us measure app adoption vs WhatsApp over time and protect mistri attributio
 1. **RECEIVED** — WhatsApp msg / app order / counter entry creates the row (voice/photo stored).
 2. **QUOTED** — staff match part + set price; buyer gets an order summary + **Confirm** button (WhatsApp interactive message) and a **UPI QR / `upi://` link in the chat**.
 3. **PAID** — buyer pays via any UPI app; **staff manually confirm receipt** in the admin inbox, **entering the UTR / UPI reference** (required — forces verifying the amount actually landed; a screenshot is not proof) → order unlocks for packing. *(Later: Razorpay webhook auto-confirms.)*
-4. **PACKED** — staff print thermal label (route + conductor + OTP).
-5. **DISPATCHED** — handed to bus conductor; 4-digit OTP issued to buyer.
-6. **DELIVERED** — buyer gives OTP at village stop → confirmed → mistri cashback credited **only if the order was placed by a mistri through the app** (see §4 commission rule).
+4. **PACKED** — staff pack the part (implicit; folded into dispatch for the prototype).
+5. **DISPATCHED** — staff record the **bus route + conductor** and **notify the customer** which bus the parcel is on (manual call/WhatsApp now; auto-WhatsApp later).
+6. **DELIVERED** — staff **mark delivered** once the customer confirms receipt (call/WhatsApp) → mistri cashback credited **only if the order was placed by a mistri through the app** (see §4). **No OTP:** there's no village-side checkpoint to verify one and payment is already collected upfront, so a code would only add friction for low-literacy farmers.
 
 ## 7. Features by surface
 
 **WhatsApp (farmers, kickoff channel):** text/voice/photo intake → Hindi auto-ack **[BUILT]** →
-order summary + **Confirm** button + **UPI QR / `upi://` link in the chat** → OTP on dispatch →
-delivery confirmation **[PLANNED — needs a live number/templates]**. No UI to learn. WhatsApp
+order summary + **Confirm** button + **UPI QR / `upi://` link in the chat** → "your parcel is on
+bus X" on dispatch → delivery confirmation **[PLANNED — needs a live number/templates]**. No UI to learn. WhatsApp
 carries the QR; it is not the payment processor.
 
 **App — FARMER mode:** voice-note / photo ordering, big icons, Hindi voice UI, order
@@ -171,7 +171,7 @@ stays in the loop, never bypassed). **Cashback accrues only on app-placed orders
 unified orders inbox (filter by status) + order detail workflow • match part via **organic
 catalog** (type-ahead over saved parts; create once if new; duplicate-proof) at the correct
 **two-tier price by customer type** • set price → generate **UPI QR** • **mark paid with UTR**
-• thermal-label data (route + conductor + OTP) • dispatch/deliver • walk-in customer onboarding
+• dispatch (record bus route + conductor, notify customer) • mark delivered • walk-in customer onboarding
 • home stats. `OWNER`/`STAFF` see only their shop; **`SUPER_ADMIN`** adds shops and switches
 between them for a network-wide view. *(AI part-suggestion panel is [PLANNED], slots into the
 order detail.)*

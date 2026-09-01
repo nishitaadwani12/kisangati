@@ -15,7 +15,6 @@ export function OrderDetail() {
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
   const [upiLink, setUpiLink] = useState("");
-  const [otp, setOtp] = useState("");
 
   const load = async () => {
     setErr(""); setMsg("");
@@ -115,12 +114,13 @@ export function OrderDetail() {
 
       {order.status === "QUOTED" && <ConfirmPayment id={id} onDone={load} setErr={setErr} setMsg={setMsg} />}
 
-      {order.status === "PAID" && <Dispatch id={id} onDone={load} setErr={setErr} setOtp={setOtp} otp={otp} />}
+      {order.status === "PAID" && <Dispatch id={id} onDone={load} setErr={setErr} />}
 
       {order.status === "DISPATCHED" && (
         <div className="card">
-          <h3 style={{ marginTop: 0 }}>{t("confirmDeliveryOtp")}</h3>
+          <h3 style={{ marginTop: 0 }}>{t("outForDelivery")}</h3>
           {order.delivery && <p className="muted">{t("onBusConductor", { route: order.delivery.busRoute || "", name: order.delivery.conductorName || "" })}</p>}
+          <p>📞 {t("notifyCustomer")}</p>
           <DeliverForm id={id} onDone={load} setErr={setErr} setMsg={setMsg} />
         </div>
       )}
@@ -223,7 +223,7 @@ function ConfirmPayment({ id, onDone, setErr, setMsg }: { id: string; onDone: ()
   );
 }
 
-function Dispatch({ id, onDone, setErr, setOtp, otp }: { id: string; onDone: () => void; setErr: (s: string) => void; setOtp: (s: string) => void; otp: string }) {
+function Dispatch({ id, onDone, setErr }: { id: string; onDone: () => void; setErr: (s: string) => void }) {
   const { t } = useI18n();
   const [route, setRoute] = useState("");
   const [conductor, setConductor] = useState("");
@@ -235,26 +235,21 @@ function Dispatch({ id, onDone, setErr, setOtp, otp }: { id: string; onDone: () 
         <div className="field"><label>{t("conductor")}</label><input value={conductor} onChange={(e) => setConductor(e.target.value)} /></div>
         <button className="warn" onClick={async () => {
           setErr("");
-          try { const r = await api.dispatch(id, route.trim(), conductor.trim()); setOtp(r.otp); onDone(); }
+          try { await api.dispatch(id, route.trim(), conductor.trim()); onDone(); }
           catch (e) { setErr((e as Error).message); }
-        }}>{t("dispatchGenerateOtp")}</button>
+        }}>{t("markDispatched")}</button>
       </div>
-      {otp && <p style={{ marginTop: 12 }}>{t("giveOtp")}<br /><span className="otp">{otp}</span></p>}
     </div>
   );
 }
 
 function DeliverForm({ id, onDone, setErr, setMsg }: { id: string; onDone: () => void; setErr: (s: string) => void; setMsg: (s: string) => void }) {
   const { t } = useI18n();
-  const [otp, setOtp] = useState("");
   return (
-    <div className="row">
-      <div className="field"><label>{t("otpFromCustomer")}</label><input value={otp} onChange={(e) => setOtp(e.target.value)} /></div>
-      <button onClick={async () => {
-        setErr(""); setMsg("");
-        try { const r = await api.deliver(id, otp.trim()); setMsg(r.cashbackPaise > 0 ? t("deliveredCashback", { amt: rupees(r.cashbackPaise) }) : t("deliveredOk")); onDone(); }
-        catch (e) { setErr((e as Error).message); }
-      }}>{t("confirmDelivered")}</button>
-    </div>
+    <button onClick={async () => {
+      setErr(""); setMsg("");
+      try { const r = await api.deliver(id); setMsg(r.cashbackPaise > 0 ? t("deliveredCashback", { amt: rupees(r.cashbackPaise) }) : t("deliveredOk")); onDone(); }
+      catch (e) { setErr((e as Error).message); }
+    }}>{t("markDelivered")}</button>
   );
 }

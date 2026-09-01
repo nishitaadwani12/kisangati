@@ -136,7 +136,7 @@ model Delivery {
   order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   busRoute     String?
   conductorName String?
-  otpHash      String? // 4-digit OTP, hashed — never plaintext
+  otpHash      String? // DEPRECATED — OTP-at-stop dropped (no village checkpoint); kept nullable/unused
   dispatchedAt DateTime?
   claimedAt    DateTime?
 }

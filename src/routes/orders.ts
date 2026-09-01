@@ -2,7 +2,6 @@ import { Router, Request } from "express";
 import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
 import { deliveryFeeFor, cashbackFor } from "../lib/money";
-import { generateOtp, hashOtp, verifyOtp } from "../lib/otp";
 import { buildUpiLink } from "../lib/upi";
 import { shopFilter, shopIdForCreate } from "../middleware/auth";
 
@@ -155,8 +154,8 @@ orders.post(
   })
 );
 
-// POST /api/orders/:id/dispatch — assign route/conductor, generate OTP, mark DISPATCHED.
-// body: { busRoute, conductorName }. Returns the plaintext OTP ONCE (never stored in plaintext).
+// POST /api/orders/:id/dispatch — record bus route + conductor, mark DISPATCHED.
+// body: { busRoute, conductorName }. Staff then notify the customer which bus the parcel is on.
 orders.post(
   "/:id/dispatch",
   ah(async (req, res) => {
@@ -165,29 +164,26 @@ orders.post(
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
     if (order.payment?.status !== "CONFIRMED") throw new HttpError(400, "Confirm payment before dispatch");
 
-    const otp = generateOtp();
     await db.$transaction([
       db.delivery.upsert({
         where: { orderId: order.id },
-        create: { orderId: order.id, busRoute, conductorName, otpHash: hashOtp(otp), dispatchedAt: new Date() },
-        update: { busRoute, conductorName, otpHash: hashOtp(otp), dispatchedAt: new Date(), claimedAt: null },
+        create: { orderId: order.id, busRoute, conductorName, dispatchedAt: new Date() },
+        update: { busRoute, conductorName, dispatchedAt: new Date(), claimedAt: null },
       }),
       db.order.update({ where: { id: order.id }, data: { status: "DISPATCHED" } }),
     ]);
-    res.json({ orderId: order.id, status: "DISPATCHED", otp, busRoute, conductorName });
+    res.json({ orderId: order.id, status: "DISPATCHED", busRoute, conductorName });
   })
 );
 
-// POST /api/orders/:id/deliver — verify OTP, mark DELIVERED, credit mistri cashback if applicable.
-// body: { otp }
+// POST /api/orders/:id/deliver — mark DELIVERED once the customer confirms receipt (by call/WhatsApp).
+// No OTP — there's no village-side checkpoint; payment is already collected upfront.
 orders.post(
   "/:id/deliver",
   ah(async (req, res) => {
-    const otp = String(req.body?.otp ?? "");
-    const order = await db.order.findUnique({ where: { id: req.params.id }, include: { delivery: true, user: true } });
+    const order = await db.order.findUnique({ where: { id: req.params.id }, include: { user: true } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
-    if (!order.delivery?.otpHash) throw new HttpError(400, "Order not dispatched yet");
-    if (!verifyOtp(otp, order.delivery.otpHash)) throw new HttpError(400, "Incorrect OTP");
+    if (order.status !== "DISPATCHED") throw new HttpError(400, "Order is not out for delivery");
 
     // Commission rule: cashback only on app-placed mistri orders.
     const earnsCashback = order.user.userType === "MISTRI" && order.orderSource === "APP";
