@@ -52,8 +52,9 @@ async function main() {
   console.log(`Seeding demo data → ${BASE}`);
 
   // Shops + login accounts (created directly; login itself needs them to exist first).
-  const shop1 = await db.shop.create({ data: { name: "Satram Tractors", town: "Jhansi", whatsappPhoneNumberId: "TEST_PNID_SHOP1" } });
-  const shop2 = await db.shop.create({ data: { name: "Relative Tractor Parts", town: "Jhansi" } });
+  // Stable ids so re-seeding doesn't invalidate a running app's cached shop list.
+  const shop1 = await db.shop.create({ data: { id: "shop-satram", name: "Satram Tractors", town: "Jhansi", whatsappPhoneNumberId: "TEST_PNID_SHOP1" } });
+  const shop2 = await db.shop.create({ data: { id: "shop-relative", name: "Relative Tractor Parts", town: "Jhansi" } });
   const hash = await bcrypt.hash(PW, 10);
   await db.adminUser.create({ data: { email: "nishita.kisangati@gmail.com", name: "Nishita (network)", passwordHash: hash, role: "SUPER_ADMIN", shopId: null } });
   await db.adminUser.create({ data: { email: "satramtractors@gmail.com", name: "Satram Tractors Owner", passwordHash: hash, role: "OWNER", shopId: shop1.id } });
