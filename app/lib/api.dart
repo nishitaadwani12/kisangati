@@ -5,8 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Thin client for the KisanGati customer API. Money is in paise.
 class Api {
-  // Web (Chrome) reaches the host directly; the Android emulator reaches the host via 10.0.2.2.
-  static const String base = kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
+  // Prod builds pass --dart-define=API_BASE=https://api.kisangati.in .
+  // Dev default: web (Chrome) reaches the host directly; the Android emulator reaches it via 10.0.2.2.
+  static const String _defaultBase = kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000';
+  static const String base = String.fromEnvironment('API_BASE', defaultValue: _defaultBase);
   static String? token;
 
   static Future<void> loadToken() async {

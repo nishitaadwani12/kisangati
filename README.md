@@ -7,6 +7,15 @@ component specs, and [`docs/`](docs/) for the business plan.
 ## Prototype layout
 - **Backend API** — Node + TypeScript + Express + Prisma (SQLite day-1). Root of repo, in `src/`.
 - **Admin dashboard** — React + Vite, in `web/`.
+- **Customer app** — Flutter (farmer + mistri), in `app/`.
+
+## Going to production (checklist)
+The code is deploy-ready; these are the remaining setup steps:
+1. **Postgres** — change `prisma/schema.prisma` datasource `provider` to `postgresql`, set `DATABASE_URL` to the managed DB, and run `prisma migrate deploy`. (Deferred from dev, which uses SQLite.)
+2. **Secrets/config** — set a strong `JWT_SECRET`, `CORS_ORIGINS` (dashboard + app origins), and an OTP provider (`OTP_PROVIDER_URL`/`OTP_PROVIDER_AUTH`) so customer login codes are actually sent.
+3. **HTTPS** — serve the API over TLS; the Android app then talks HTTPS (cleartext is dev-only, limited to `10.0.2.2`/`localhost` via the network-security config).
+4. **App build** — `flutter build apk --release --dart-define=API_BASE=https://<your-api>` (base URL is build-time configurable).
+5. **WhatsApp** — complete the Meta setup (see `specs/whatsapp-intake.md`).
 
 ## Run locally
 

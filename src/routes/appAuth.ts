@@ -3,6 +3,7 @@ import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
 import { signCustomerToken } from "../lib/auth";
 import { issueOtp, checkOtp } from "../lib/otpStore";
+import { deliverOtp, otpProviderConfigured } from "../lib/notify";
 
 // PUBLIC customer auth for the mobile app (phone + OTP). No JWT required to reach these.
 export const appAuth = Router();
@@ -28,8 +29,9 @@ appAuth.post(
     if (!shop) throw new HttpError(404, "Shop not found");
 
     const code = issueOtp(shopId, phone);
-    console.log(`[app-auth] OTP for ${phone} @ ${shop.name}: ${code}`);
-    const devCode = process.env.NODE_ENV === "production" ? undefined : code;
+    await deliverOtp(phone, code);
+    // Return the code for convenience ONLY in dev when no real delivery provider is configured.
+    const devCode = process.env.NODE_ENV !== "production" && !otpProviderConfigured() ? code : undefined;
     res.json({ sent: true, devCode });
   })
 );
