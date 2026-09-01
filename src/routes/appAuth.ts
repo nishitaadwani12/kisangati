@@ -29,7 +29,7 @@ appAuth.post(
     if (!shop) throw new HttpError(404, "Shop not found");
 
     const code = issueOtp(shopId, phone);
-    await deliverOtp(phone, code);
+    await deliverOtp(phone, code, { whatsappPhoneNumberId: shop.whatsappPhoneNumberId });
     // Return the code ONLY when explicitly opted in for local dev (OTP_DEV_ECHO=1) and no real
     // provider is configured and not production. Never echo the OTP by default.
     const devEcho = process.env.OTP_DEV_ECHO === "1" && process.env.NODE_ENV !== "production" && !otpProviderConfigured();
