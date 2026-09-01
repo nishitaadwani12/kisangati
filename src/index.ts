@@ -1,6 +1,7 @@
 import "dotenv/config";
 import fs from "fs";
 import express, { NextFunction, Request, Response } from "express";
+import cors from "cors";
 import { HttpError } from "./lib/http";
 import { MEDIA_DIR } from "./lib/whatsapp";
 import { authRequired } from "./middleware/auth";
@@ -16,6 +17,7 @@ import { appAuth } from "./routes/appAuth";
 import { app as appRoutes } from "./routes/app";
 
 const app = express();
+app.use(cors()); // prototype: allow the Flutter app (and other clients) cross-origin. Restrict before prod.
 app.use(express.json());
 fs.mkdirSync(MEDIA_DIR, { recursive: true }); // ensure media upload/download dir exists
 
