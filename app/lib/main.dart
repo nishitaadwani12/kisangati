@@ -118,10 +118,17 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() { _phone.dispose(); _name.dispose(); _code.dispose(); super.dispose(); }
 
+  // Farmers type only their 10 digits; we always send E.164 with the India +91 prefix.
+  String get _fullPhone {
+    final digits = _phone.text.replaceAll(RegExp(r'\D'), '');
+    final ten = digits.length > 10 ? digits.substring(digits.length - 10) : digits;
+    return '+91$ten';
+  }
+
   Future<void> _requestOtp() async {
     setState(() { _err = ''; _info = ''; _busy = true; });
     try {
-      final r = await Api.requestOtp(_shopId!, _phone.text.trim());
+      final r = await Api.requestOtp(_shopId!, _fullPhone);
       if (!mounted) return;
       setState(() { _otpSent = true; if (r['devCode'] != null) { _code.text = r['devCode']; _info = 'Dev code: ${r['devCode']}'; } });
     } catch (e) { if (mounted) setState(() => _err = '$e'); }
@@ -131,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _verify() async {
     setState(() { _err = ''; _busy = true; });
     try {
-      await Api.verifyOtp(_shopId!, _phone.text.trim(), _code.text.trim(), _name.text.trim());
+      await Api.verifyOtp(_shopId!, _fullPhone, _code.text.trim(), _name.text.trim());
       widget.onLoggedIn();
     } catch (e) { if (mounted) setState(() => _err = '$e'); }
     finally { if (mounted) setState(() => _busy = false); }
@@ -160,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 onChanged: (v) => setState(() => _shopId = v),
               ),
               const SizedBox(height: 12),
-              TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: t('phone'), hintText: '+9198…', border: const OutlineInputBorder())),
+              TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: t('phone'), prefixText: '+91 ', hintText: t('phoneHint'), border: const OutlineInputBorder())),
               if (!_otpSent) ...[
                 const SizedBox(height: 16),
                 FilledButton(onPressed: _busy || _shopId == null ? null : _requestOtp, child: Text(t('sendCode'))),

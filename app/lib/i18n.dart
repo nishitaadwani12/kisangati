@@ -20,7 +20,7 @@ String t(String key) => _dict[appLang.value]?[key] ?? _dict['en']![key] ?? key;
 const Map<String, Map<String, String>> _dict = {
   'en': {
     'tagline': 'Order tractor parts from your shop',
-    'shop': 'Shop', 'phone': 'Phone', 'sendCode': 'Send code',
+    'shop': 'Shop', 'phone': 'Phone', 'phoneHint': '10-digit mobile', 'sendCode': 'Send code',
     'nameOptional': 'Your name (optional)', 'enterCode': 'Enter code', 'verifySignIn': 'Verify & sign in',
     'myOrders': 'My Orders', 'newOrder': 'New Order', 'catalog': 'Catalog', 'wallet': 'Wallet',
     'noOrders': 'No orders yet.', 'nItems': '{n} item(s)',
@@ -44,7 +44,7 @@ const Map<String, Map<String, String>> _dict = {
   },
   'hi': {
     'tagline': 'अपनी दुकान से ट्रैक्टर पार्ट्स ऑर्डर करें',
-    'shop': 'दुकान', 'phone': 'फ़ोन', 'sendCode': 'कोड भेजें',
+    'shop': 'दुकान', 'phone': 'फ़ोन', 'phoneHint': '10 अंकों का मोबाइल', 'sendCode': 'कोड भेजें',
     'nameOptional': 'आपका नाम (वैकल्पिक)', 'enterCode': 'कोड डालें', 'verifySignIn': 'सत्यापित करें और साइन इन करें',
     'myOrders': 'मेरे ऑर्डर', 'newOrder': 'नया ऑर्डर', 'catalog': 'कैटलॉग', 'wallet': 'वॉलेट',
     'noOrders': 'अभी कोई ऑर्डर नहीं।', 'nItems': '{n} वस्तु',
