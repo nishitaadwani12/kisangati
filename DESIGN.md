@@ -23,13 +23,18 @@
 - **WhatsApp intake:** public webhook (token-verified) → routes to a shop by `phone_number_id`,
   creates a `RECEIVED` order from text/voice/photo, dedupes retries, sends a Hindi auto-reply,
   and **downloads the voice/photo file** (stored under `/media`, playable/viewable in the dashboard).
+- **Customer app API:** phone+OTP customer auth (customer JWT, isolated from admin), shop list,
+  catalog priced by the customer's role, place order (catalog→QUOTED / voice-photo-text→RECEIVED),
+  my orders, mistri wallet, media upload. CORS enabled for the app.
+- **Flutter customer app (farmer + mistri):** shop-select + phone/OTP login, My Orders, New Order
+  (text), mistri Catalog + one-tap order + Wallet. **Runs on the Android emulator and web (Chrome).**
 - **React/Vite admin dashboard**: login, orders inbox + detail workflow, catalog, customers,
   home stats, super-admin **Shops** page + shop switcher, **HI|EN** language toggle.
 - Money stored in **paise** (integers) throughout. Demo seed across two shops.
 
-**Not built yet (planned):** the `ml-service` (part-ID + STT), the Flutter customer app, Redis,
-Razorpay auto-confirm, object storage (media is on local disk for now), in-chat UPI QR delivery,
-deployment. Multi-tenant data
+**Not built yet (planned):** the `ml-service` (part-ID + STT), **in-app voice/photo ordering**
+(text works; media-upload endpoint is ready), app Hindi/polish, Redis, Razorpay auto-confirm,
+object storage (media is on local disk for now), in-chat UPI QR delivery, deployment. Multi-tenant data
 isolation is **already built** (ahead of the original "long-term" plan) because a relative's
 shop will be onboarded as a real second tenant for end-to-end testing.
 
@@ -99,8 +104,9 @@ Single shared database. Every order and user is tagged for audit/analytics (see 
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Customer app | **Flutter (Dart)** | Farmers + mistris. One codebase, strong on low-end Android, good offline + Devanagari rendering, small APK. Libs: `dio`, `riverpod`, `drift`/`sqflite` (offline cache), `razorpay_flutter`, `firebase_messaging`. |
-| Admin dashboard | **React + Vite (web)** | Internal, operated by us. Fast to iterate; back-office only, so it doesn't dilute the app-first story. Long-term becomes the multi-tenant seller portal. |
+| Customer app | **Flutter (Dart)** | **[BUILT — partial]** Farmers + mistris; runs on Android emulator + web. Currently uses `http` + `shared_preferences`. Login/orders/catalog/wallet done; voice/photo ordering + offline cache + push next. |
+| Admin dashboard | **React + Vite (web)** | **[BUILT]** Internal, operated by us. Fast to iterate; back-office only. Long-term becomes the multi-tenant seller portal. |
+| App ↔ API | **CORS** enabled; base URL `localhost` (web) / `10.0.2.2` (Android emulator) | **[BUILT]** Cleartext HTTP allowed in the dev Android manifest; restrict + HTTPS before prod. |
 | Backend/API | **Node.js + TypeScript + Express** | REST + JSON. **[BUILT]** All money handled in **paise** (integers) — no floats. |
 | Database | **Prisma**; **SQLite now** → PostgreSQL later | **[BUILT on SQLite]** Enum-like columns are strings and JSON columns are strings for SQLite portability; Prisma makes the Postgres switch trivial. |
 | Queue/cache | **Redis** | **[PLANNED]** Async jobs (media download, WhatsApp send retries, payment reconciliation), OTP + session cache. Not wired yet. |
@@ -166,12 +172,12 @@ order summary + **Confirm** button + **UPI QR / `upi://` link in the chat** → 
 bus X" on dispatch → delivery confirmation **[PLANNED — needs a live number/templates]**. No UI to learn. WhatsApp
 carries the QR; it is not the payment processor.
 
-**App — FARMER mode:** voice-note / photo ordering, big icons, Hindi voice UI, order
-tracking + push. Deliberately as simple as WhatsApp.
+**App — FARMER mode:** phone/OTP login **[BUILT]** • text ordering + My Orders **[BUILT]** •
+voice-note / photo ordering **[NEXT]** • big icons, Hindi voice UI, push **[PLANNED]**.
 
-**App — MISTRI mode:** OTP login • catalog by brand/model • cart + reorder • UPI checkout •
-wallet (cashback balance + UPI payout) • order tracking + push • refer-a-farmer (mistri
-stays in the loop, never bypassed). **Cashback accrues only on app-placed orders.**
+**App — MISTRI mode:** OTP login • **catalog by role price + one-tap order** • **wallet** (balance
++ history) • My Orders **[all BUILT]** • cart + reorder, UPI checkout, push, refer-a-farmer
+**[PLANNED]**. **Cashback accrues only on app-placed orders.**
 
 **Web dashboard — login roles (internal) [BUILT]:** email+password login • **HI|EN toggle** •
 unified orders inbox (filter by status) + order detail workflow • match part via **organic
@@ -207,7 +213,8 @@ Prove the order → pay → dispatch loop with real money before building the po
    (media download + in-chat UPI QR delivery are the remaining pieces.)
 5. **`ml-service` Phase 1 (in parallel)** — Python service with a multimodal-LLM + catalog-RAG
    part suggester to assist staff. Real accuracy still depends on the real-photo dataset. **[PLANNED]**
-6. **Farmer + Mistri app modes** — built on a backend already proven with real orders. **[PLANNED]**
+6. **Farmer + Mistri app modes** — Flutter app + customer API. **[IN PROGRESS]** login/orders/catalog/wallet
+   done and running on the Android emulator; voice/photo ordering + polish next.
 
 Deferred until the loop works: full custom-trained model (Phase 2), the mistri services
 marketplace, the multi-tenant seller platform, any production deployment.
