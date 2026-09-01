@@ -12,7 +12,7 @@ See also: [`../DESIGN.md`](../DESIGN.md) (architecture + tech decisions) and
 | Spec | Component | Status |
 |---|---|---|
 | [dashboard.md](dashboard.md) | Admin web dashboard (React) — order processing, payments, inventory, dispatch | **Built** |
-| [whatsapp-intake.md](whatsapp-intake.md) | WhatsApp Cloud API intake (webhook → order + Hindi auto-reply) | **Built** (media download deferred) |
+| [whatsapp-intake.md](whatsapp-intake.md) | WhatsApp Cloud API intake (webhook → order + Hindi auto-reply + media download) | **Built** (needs live Meta number to test) |
 | [mobile-app.md](mobile-app.md) | Flutter customer app (farmer + mistri) + customer API | **Built** |
 | _data-model.md_ | Prisma schema / database | Lives in `prisma/schema.prisma` |
 | _ml-service.md_ | Python part-identification + speech-to-text service | Planned |
