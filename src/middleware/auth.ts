@@ -17,7 +17,9 @@ export function authRequired(req: Request, _res: Response, next: NextFunction) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) return next(new HttpError(401, "Not authenticated"));
   try {
-    req.auth = verifyToken(token);
+    const payload = verifyToken(token) as TokenPayload & { customer?: boolean };
+    if (payload.customer) return next(new HttpError(403, "Customer token cannot access the admin API"));
+    req.auth = payload;
     next();
   } catch {
     next(new HttpError(401, "Invalid or expired session"));

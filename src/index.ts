@@ -1,8 +1,10 @@
 import "dotenv/config";
+import fs from "fs";
 import express, { NextFunction, Request, Response } from "express";
 import { HttpError } from "./lib/http";
 import { MEDIA_DIR } from "./lib/whatsapp";
 import { authRequired } from "./middleware/auth";
+import { customerRequired } from "./middleware/appAuth";
 import { auth } from "./routes/auth";
 import { webhook } from "./routes/webhook";
 import { shops } from "./routes/shops";
@@ -10,9 +12,12 @@ import { orders } from "./routes/orders";
 import { skus } from "./routes/skus";
 import { customers } from "./routes/customers";
 import { stats } from "./routes/stats";
+import { appAuth } from "./routes/appAuth";
+import { app as appRoutes } from "./routes/app";
 
 const app = express();
 app.use(express.json());
+fs.mkdirSync(MEDIA_DIR, { recursive: true }); // ensure media upload/download dir exists
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -31,6 +36,10 @@ app.use("/api/orders", authRequired, orders);
 app.use("/api/skus", authRequired, skus);
 app.use("/api/customers", authRequired, customers);
 app.use("/api/stats", authRequired, stats);
+
+// Customer mobile-app API
+app.use("/app/auth", appAuth); // public (phone + OTP)
+app.use("/app", customerRequired, appRoutes);
 
 // Central error handler — HttpError carries a status; everything else is a 500.
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
