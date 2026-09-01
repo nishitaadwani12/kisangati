@@ -1,8 +1,13 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const SECRET = process.env.JWT_SECRET || "dev-only-insecure-secret-change-me";
-if (!process.env.JWT_SECRET) console.warn("[auth] JWT_SECRET not set — using an insecure dev default. Set it in .env before deploying.");
+const DEV_SECRET = "dev-only-insecure-secret-change-me";
+const SECRET = process.env.JWT_SECRET || DEV_SECRET;
+// Fail fast in production: never run on the public dev default.
+if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || SECRET === DEV_SECRET)) {
+  throw new Error("JWT_SECRET must be set to a strong secret in production");
+}
+if (SECRET === DEV_SECRET) console.warn("[auth] Using the insecure dev JWT secret. Set JWT_SECRET before deploying.");
 
 export type Role = "SUPER_ADMIN" | "OWNER" | "STAFF";
 export interface TokenPayload { adminUserId: string; role: Role; shopId: string | null }

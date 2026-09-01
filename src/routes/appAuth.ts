@@ -30,9 +30,10 @@ appAuth.post(
 
     const code = issueOtp(shopId, phone);
     await deliverOtp(phone, code);
-    // Return the code for convenience ONLY in dev when no real delivery provider is configured.
-    const devCode = process.env.NODE_ENV !== "production" && !otpProviderConfigured() ? code : undefined;
-    res.json({ sent: true, devCode });
+    // Return the code ONLY when explicitly opted in for local dev (OTP_DEV_ECHO=1) and no real
+    // provider is configured and not production. Never echo the OTP by default.
+    const devEcho = process.env.OTP_DEV_ECHO === "1" && process.env.NODE_ENV !== "production" && !otpProviderConfigured();
+    res.json({ sent: true, devCode: devEcho ? code : undefined });
   })
 );
 

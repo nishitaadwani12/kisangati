@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import path from "path";
+import { randomUUID } from "crypto";
 import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
 import { deliveryFeeFor, priceFor } from "../lib/money";
@@ -47,6 +47,8 @@ app.post(
     const c = req.customer!;
     const b = req.body ?? {};
     const items = Array.isArray(b.items) ? b.items : [];
+    if (b.mediaUrl != null && !String(b.mediaUrl).startsWith("/media/")) throw new HttpError(400, "invalid mediaUrl");
+    if (items.length > 50) throw new HttpError(400, "too many items");
 
     const order = await db.$transaction(async (tx) => {
       const created = await tx.order.create({
@@ -107,12 +109,20 @@ app.get(
 );
 
 // POST /app/media — upload a voice note / photo (multipart field "file"); returns its /media URL.
+// Only image/audio types allowed; the extension is derived from the (trusted) MIME, and the filename is a
+// random UUID — client filenames are never used (avoids stored-XSS / arbitrary-file hosting).
+const ALLOWED_MIME: Record<string, string> = {
+  "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic",
+  "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/x-m4a": "m4a", "audio/aac": "aac", "audio/wav": "wav", "audio/webm": "webm",
+};
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, MEDIA_DIR),
-    filename: (_req, file, cb) => cb(null, `app-${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname) || ""}`),
+    filename: (_req, file, cb) => cb(null, `app-${randomUUID()}.${ALLOWED_MIME[file.mimetype] ?? "bin"}`),
   }),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB
+  fileFilter: (_req, file, cb) =>
+    ALLOWED_MIME[file.mimetype] ? cb(null, true) : cb(new HttpError(400, "Only image or audio files are allowed")),
 });
 app.post(
   "/media",

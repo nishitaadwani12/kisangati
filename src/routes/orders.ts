@@ -81,6 +81,7 @@ orders.post(
     if (!Array.isArray(items) || items.length === 0) throw new HttpError(400, "items[] is required");
     const order = await db.order.findUnique({ where: { id: req.params.id } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
+    if (!["RECEIVED", "QUOTED"].includes(order.status)) throw new HttpError(409, `Cannot edit items on a ${order.status} order`);
 
     let subtotal = 0;
     for (const it of items) {
@@ -112,6 +113,7 @@ orders.post(
   ah(async (req, res) => {
     const order = await db.order.findUnique({ where: { id: req.params.id }, include: { items: true } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
+    if (!["RECEIVED", "QUOTED"].includes(order.status)) throw new HttpError(409, `Cannot quote a ${order.status} order`);
     if (order.total <= 0) throw new HttpError(400, "Add priced items before quoting");
 
     const upiLink = buildUpiLink(order.total, `KisanGati order ${order.id.slice(-6)}`);
@@ -139,6 +141,7 @@ orders.post(
 
     const order = await db.order.findUnique({ where: { id: req.params.id }, include: { payment: true } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
+    if (order.status !== "QUOTED") throw new HttpError(409, `Cannot confirm payment on a ${order.status} order`);
     if (!order.payment) throw new HttpError(400, "No payment to confirm — quote the order first");
     if (order.payment.status === "CONFIRMED") throw new HttpError(409, "Payment already confirmed");
 
@@ -146,7 +149,7 @@ orders.post(
     await db.$transaction([
       db.payment.update({
         where: { orderId: order.id },
-        data: { status: "CONFIRMED", utr, confirmedBy: req.body?.confirmedBy ?? "staff", confirmedAt: now, paidAt: now },
+        data: { status: "CONFIRMED", utr, confirmedBy: req.auth!.adminUserId, confirmedAt: now, paidAt: now },
       }),
       db.order.update({ where: { id: order.id }, data: { status: "PAID" } }),
     ]);
@@ -162,7 +165,7 @@ orders.post(
     const { busRoute, conductorName } = req.body ?? {};
     const order = await db.order.findUnique({ where: { id: req.params.id }, include: { payment: true } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
-    if (order.payment?.status !== "CONFIRMED") throw new HttpError(400, "Confirm payment before dispatch");
+    if (order.status !== "PAID") throw new HttpError(409, `Cannot dispatch a ${order.status} order (payment must be confirmed first)`);
 
     await db.$transaction([
       db.delivery.upsert({
@@ -233,7 +236,7 @@ orders.post(
 
     await db.payment.update({
       where: { orderId: order.id },
-      data: { refundStatus: "COMPLETED", refundUtr: utr, refundedBy: req.body?.refundedBy ?? "staff", refundedAt: new Date() },
+      data: { refundStatus: "COMPLETED", refundUtr: utr, refundedBy: req.auth!.adminUserId, refundedAt: new Date() },
     });
     res.json({ orderId: order.id, refundStatus: "COMPLETED", utr });
   })

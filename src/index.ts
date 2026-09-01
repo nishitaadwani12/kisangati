@@ -28,7 +28,8 @@ const corsOrigins = (process.env.CORS_ORIGINS || "").split(",").map((s) => s.tri
 if (corsOrigins.length === 0) console.warn("[cors] CORS_ORIGINS not set — allowing all origins (dev only; set it before deploying).");
 app.use(cors(corsOrigins.length ? { origin: corsOrigins } : {}));
 
-app.use(express.json({ limit: "1mb" }));
+// Capture the raw body so the WhatsApp webhook can verify Meta's HMAC signature.
+app.use(express.json({ limit: "1mb", verify: (req, _res, buf) => { (req as unknown as { rawBody?: Buffer }).rawBody = buf; } }));
 fs.mkdirSync(MEDIA_DIR, { recursive: true }); // ensure media upload/download dir exists
 
 // Throttle auth/OTP endpoints against brute force.
@@ -56,9 +57,14 @@ app.use("/api/stats", authRequired, stats);
 app.use("/app/auth", authLimiter, appAuth); // public (phone + OTP)
 app.use("/app", customerRequired, appRoutes);
 
-// Central error handler — HttpError carries a status; everything else is a 500.
-app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+// Central error handler — HttpError carries a status; multer upload errors map to 4xx; else 500.
+app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) return next(err);
   if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
+  if (err && (err as { name?: string }).name === "MulterError") {
+    const code = (err as { code?: string }).code;
+    return res.status(413).json({ error: code === "LIMIT_FILE_SIZE" ? "File too large (max 25 MB)" : "Upload error" });
+  }
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
 });

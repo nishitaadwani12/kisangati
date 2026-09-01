@@ -82,13 +82,18 @@ customers.post(
     if (!/^[A-Za-z0-9]{6,32}$/.test(utr)) throw new HttpError(400, "a valid payout UTR is required (6–32 alphanumeric)");
     const user = await getScopedUser(req);
     if (user.userType !== "MISTRI") throw new HttpError(400, "Only mistris have a wallet");
-    if (user.walletBalance <= 0) throw new HttpError(400, "No balance to pay out");
 
-    const amount = user.walletBalance;
-    await db.$transaction([
-      db.walletTxn.create({ data: { mistriId: user.id, type: "PAYOUT", amount, ref: utr } }),
-      db.user.update({ where: { id: user.id }, data: { walletBalance: 0 } }),
-    ]);
+    // Atomic full-balance payout with an optimistic guard so a concurrent cashback credit or a second
+    // payout request can't cause a lost credit or a double payout.
+    const amount = await db.$transaction(async (tx) => {
+      const fresh = await tx.user.findUnique({ where: { id: user.id } });
+      const bal = fresh?.walletBalance ?? 0;
+      if (bal <= 0) throw new HttpError(400, "No balance to pay out");
+      const upd = await tx.user.updateMany({ where: { id: user.id, walletBalance: bal }, data: { walletBalance: 0 } });
+      if (upd.count !== 1) throw new HttpError(409, "Wallet balance changed — please retry");
+      await tx.walletTxn.create({ data: { mistriId: user.id, type: "PAYOUT", amount: bal, ref: utr } });
+      return bal;
+    });
     res.json({ mistriId: user.id, paidOutPaise: amount, balance: 0 });
   })
 );

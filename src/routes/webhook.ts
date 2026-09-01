@@ -1,9 +1,24 @@
-import { Router } from "express";
+import { Router, Request } from "express";
+import { createHmac, timingSafeEqual } from "crypto";
 import { db } from "../db";
 import { sendText, ACK_HINDI, downloadMedia } from "../lib/whatsapp";
 
 // PUBLIC endpoint — Meta calls this; it is NOT behind auth. Verified by a token on GET.
 export const webhook = Router();
+
+// Verify Meta's X-Hub-Signature-256 HMAC over the raw body. If WHATSAPP_APP_SECRET is unset (local
+// dev / simulated payloads), skip with a warning so testing still works.
+function verifySignature(req: Request): boolean {
+  const secret = process.env.WHATSAPP_APP_SECRET;
+  if (!secret) { console.warn("[whatsapp] WHATSAPP_APP_SECRET unset — skipping signature check (set it before production)."); return true; }
+  const raw = (req as unknown as { rawBody?: Buffer }).rawBody;
+  const header = req.get("x-hub-signature-256") || "";
+  if (!raw || !header.startsWith("sha256=")) return false;
+  const expected = "sha256=" + createHmac("sha256", secret).update(raw).digest("hex");
+  const a = Buffer.from(header);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 // GET /webhook — Meta's verification handshake.
 webhook.get("/", (req, res) => {
@@ -42,6 +57,7 @@ function parseMessage(msg: any): { rawText: string; mediaId: string | null } {
 
 // POST /webhook — inbound messages. Always respond 200 quickly (Meta retries non-200s).
 webhook.post("/", async (req, res) => {
+  if (!verifySignature(req)) return res.sendStatus(401);
   res.sendStatus(200); // ack first; process below
   try {
     const entries = req.body?.entry ?? [];
