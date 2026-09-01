@@ -4,10 +4,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'api.dart';
+import 'i18n.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Api.loadToken();
+  await loadLang();
   runApp(const KisanGatiApp());
 }
 
@@ -26,11 +28,15 @@ class _KisanGatiAppState extends State<KisanGatiApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KisanGati',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: green, useMaterial3: true),
-      home: loggedIn ? HomeScreen(onLogout: _refresh) : LoginScreen(onLoggedIn: _refresh),
+    // Rebuild the whole app when the language changes.
+    return ValueListenableBuilder<String>(
+      valueListenable: appLang,
+      builder: (_, _, _) => MaterialApp(
+        title: 'KisanGati',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(colorSchemeSeed: green, useMaterial3: true),
+        home: loggedIn ? HomeScreen(onLogout: _refresh) : LoginScreen(onLoggedIn: _refresh),
+      ),
     );
   }
 }
@@ -88,30 +94,31 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 380),
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Align(alignment: Alignment.centerRight, child: LangToggle(color: green)),
               const Text('KisanGati', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: green)),
               const SizedBox(height: 4),
-              const Text('Order tractor parts from your shop', style: TextStyle(color: Colors.black54)),
+              Text(t('tagline'), style: const TextStyle(color: Colors.black54)),
               const SizedBox(height: 24),
               if (_err.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_err, style: const TextStyle(color: Colors.red))),
               if (_info.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_info, style: const TextStyle(color: green))),
               DropdownButtonFormField<String>(
                 initialValue: _shopId,
-                decoration: const InputDecoration(labelText: 'Shop', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: t('shop'), border: const OutlineInputBorder()),
                 items: _shops.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(value: s['id'], child: Text(s['name']))).toList(),
                 onChanged: (v) => setState(() => _shopId = v),
               ),
               const SizedBox(height: 12),
-              TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone', hintText: '+9198…', border: OutlineInputBorder())),
+              TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: t('phone'), hintText: '+9198…', border: const OutlineInputBorder())),
               if (!_otpSent) ...[
                 const SizedBox(height: 16),
-                FilledButton(onPressed: _busy || _shopId == null ? null : _requestOtp, child: const Text('Send code')),
+                FilledButton(onPressed: _busy || _shopId == null ? null : _requestOtp, child: Text(t('sendCode'))),
               ] else ...[
                 const SizedBox(height: 12),
-                TextField(controller: _name, decoration: const InputDecoration(labelText: 'Your name (optional)', border: OutlineInputBorder())),
+                TextField(controller: _name, decoration: InputDecoration(labelText: t('nameOptional'), border: const OutlineInputBorder())),
                 const SizedBox(height: 12),
-                TextField(controller: _code, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Enter code', border: OutlineInputBorder())),
+                TextField(controller: _code, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: t('enterCode'), border: const OutlineInputBorder())),
                 const SizedBox(height: 16),
-                FilledButton(onPressed: _busy ? null : _verify, child: const Text('Verify & sign in')),
+                FilledButton(onPressed: _busy ? null : _verify, child: Text(t('verifySignIn'))),
               ],
             ]),
           ),
@@ -147,10 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_me == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     final isMistri = _me!['userType'] == 'MISTRI';
     final tabs = <Tab>[
-      const Tab(text: 'My Orders'),
-      const Tab(text: 'New Order'),
-      if (isMistri) const Tab(text: 'Catalog'),
-      if (isMistri) const Tab(text: 'Wallet'),
+      Tab(text: t('myOrders')),
+      Tab(text: t('newOrder')),
+      if (isMistri) Tab(text: t('catalog')),
+      if (isMistri) Tab(text: t('wallet')),
     ];
     final views = <Widget>[
       const OrdersTab(),
@@ -165,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: green,
           foregroundColor: Colors.white,
           title: Text('${_me!['shopName']} · ${_me!['name'] ?? _me!['phone']}'),
-          actions: [IconButton(onPressed: _logout, icon: const Icon(Icons.logout))],
+          actions: [const LangToggle(), IconButton(onPressed: _logout, icon: const Icon(Icons.logout))],
           bottom: TabBar(tabs: tabs, labelColor: Colors.white, indicatorColor: Colors.white),
         ),
         body: TabBarView(children: views),
@@ -192,15 +199,15 @@ class _OrdersTabState extends State<OrdersTab> {
   Widget build(BuildContext context) {
     if (_err.isNotEmpty) return Center(child: Text(_err));
     if (_orders == null) return const Center(child: CircularProgressIndicator());
-    if (_orders!.isEmpty) return const Center(child: Text('No orders yet.'));
+    if (_orders!.isEmpty) return Center(child: Text(t('noOrders')));
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         children: _orders!.map<Widget>((o) {
           final total = (o['total'] ?? 0) as int;
           return ListTile(
-            title: Text(o['rawText'] ?? '${(o['items'] as List).length} item(s)'),
-            subtitle: Text(o['status']),
+            title: Text(o['rawText'] ?? t('nItems').replaceFirst('{n}', '${(o['items'] as List).length}')),
+            subtitle: Text(t('status.${o['status']}')),
             trailing: Text(total > 0 ? rupees(total) : '—'),
           );
         }).toList(),
@@ -251,7 +258,7 @@ class _NewOrderTabState extends State<NewOrderTab> {
           setState(() { _bytes = b; _attachName = 'voice.m4a'; _attachKind = 'voice'; });
         }
       } else {
-        if (!await _recorder.hasPermission()) { setState(() => _err = 'Microphone permission denied'); return; }
+        if (!await _recorder.hasPermission()) { setState(() => _err = t('micDenied')); return; }
         String path = '';
         if (!kIsWeb) { final dir = await getTemporaryDirectory(); path = '${dir.path}/order_${DateTime.now().millisecondsSinceEpoch}.m4a'; }
         await _recorder.start(const RecordConfig(), path: path);
@@ -268,9 +275,9 @@ class _NewOrderTabState extends State<NewOrderTab> {
       String? mediaUrl;
       if (_bytes != null) mediaUrl = await Api.uploadMedia(_bytes!, _attachName ?? 'attachment');
       final text = _text.text.trim();
-      if (text.isEmpty && mediaUrl == null) { setState(() { _err = 'Add a description, a photo, or a voice note.'; _busy = false; }); return; }
+      if (text.isEmpty && mediaUrl == null) { setState(() { _err = t('addSomething'); _busy = false; }); return; }
       await Api.placeOrder(rawText: text.isEmpty ? null : text, mediaUrl: mediaUrl);
-      setState(() { _msg = 'Order sent! The shop will confirm the price shortly.'; _text.clear(); _clearAttach(); });
+      setState(() { _msg = t('orderSent'); _text.clear(); _clearAttach(); });
     } catch (e) { setState(() => _err = '$e'); }
     finally { setState(() => _busy = false); }
   }
@@ -280,31 +287,31 @@ class _NewOrderTabState extends State<NewOrderTab> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Text('Describe the part you need', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        Text(t('describePart'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        TextField(controller: _text, maxLines: 3, decoration: const InputDecoration(hintText: 'e.g. Swaraj 855 clutch plate', border: OutlineInputBorder())),
+        TextField(controller: _text, maxLines: 3, decoration: InputDecoration(hintText: t('hintPart'), border: const OutlineInputBorder())),
         const SizedBox(height: 12),
-        const Text('…or attach a photo / voice note', style: TextStyle(color: Colors.black54)),
+        Text(t('orAttach'), style: const TextStyle(color: Colors.black54)),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
-          if (!kIsWeb) OutlinedButton.icon(onPressed: _busy ? null : () => _pickPhoto(ImageSource.camera), icon: const Icon(Icons.photo_camera), label: const Text('Camera')),
-          OutlinedButton.icon(onPressed: _busy ? null : () => _pickPhoto(ImageSource.gallery), icon: const Icon(Icons.image), label: const Text('Photo')),
+          if (!kIsWeb) OutlinedButton.icon(onPressed: _busy ? null : () => _pickPhoto(ImageSource.camera), icon: const Icon(Icons.photo_camera), label: Text(t('camera'))),
+          OutlinedButton.icon(onPressed: _busy ? null : () => _pickPhoto(ImageSource.gallery), icon: const Icon(Icons.image), label: Text(t('photo'))),
           OutlinedButton.icon(
             onPressed: _busy ? null : _toggleRecord,
             icon: Icon(_recording ? Icons.stop : Icons.mic, color: _recording ? Colors.red : null),
-            label: Text(_recording ? 'Stop' : 'Voice note'),
+            label: Text(_recording ? t('stop') : t('voiceNote')),
           ),
         ]),
         if (_attachName != null) Padding(
           padding: const EdgeInsets.only(top: 10),
           child: Chip(
             avatar: Icon(_attachKind == 'voice' ? Icons.mic : Icons.image, size: 18),
-            label: Text(_attachKind == 'voice' ? 'Voice note attached' : (_attachName ?? 'Photo')),
+            label: Text(_attachKind == 'voice' ? t('voiceAttached') : (_attachName ?? t('photo'))),
             onDeleted: _clearAttach,
           ),
         ),
         const SizedBox(height: 16),
-        FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.send), label: Text(_busy ? 'Sending…' : 'Send order')),
+        FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.send), label: Text(_busy ? t('sending') : t('sendOrder'))),
         if (_msg.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_msg, style: const TextStyle(color: green))),
         if (_err.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_err, style: const TextStyle(color: Colors.red))),
       ]),
@@ -330,7 +337,7 @@ class _CatalogTabState extends State<CatalogTab> {
   Future<void> _order(Map sku) async {
     try {
       await Api.placeOrder(items: [{'skuId': sku['id'], 'qty': 1}]);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ordered ${sku['name']} — check My Orders')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('ordered').replaceFirst('{name}', sku['name']))));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
@@ -340,14 +347,14 @@ class _CatalogTabState extends State<CatalogTab> {
   Widget build(BuildContext context) {
     if (_err.isNotEmpty) return Center(child: Text(_err));
     if (_skus == null) return const Center(child: CircularProgressIndicator());
-    if (_skus!.isEmpty) return const Center(child: Text('No parts in the catalog yet.'));
+    if (_skus!.isEmpty) return Center(child: Text(t('noParts')));
     return ListView(
       children: _skus!.map<Widget>((s) => ListTile(
         title: Text(s['name']),
         subtitle: Text([s['brand'], s['modelCompat']].where((x) => x != null).join(' · ')),
         trailing: Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, children: [
           Text(rupees(s['price'])),
-          FilledButton(onPressed: () => _order(s), child: const Text('Order')),
+          FilledButton(onPressed: () => _order(s), child: Text(t('order'))),
         ]),
       )).toList(),
     );
@@ -379,16 +386,16 @@ class _WalletTabState extends State<WalletTab> {
         padding: const EdgeInsets.all(20),
         color: const Color(0xFFE6F6F0),
         child: Column(children: [
-          const Text('Cashback balance', style: TextStyle(color: Colors.black54)),
+          Text(t('cashbackBalance'), style: const TextStyle(color: Colors.black54)),
           Text(rupees(_w!['balance']), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: green)),
         ]),
       ),
       Expanded(child: txns.isEmpty
-          ? const Center(child: Text('No transactions yet.'))
-          : ListView(children: txns.map<Widget>((t) => ListTile(
-              title: Text(t['type'] == 'CASHBACK' ? 'Cashback' : 'Payout'),
-              subtitle: Text(t['ref'] ?? ''),
-              trailing: Text('${t['type'] == 'CASHBACK' ? '+' : '−'}${rupees(t['amount'])}'),
+          ? Center(child: Text(t('noTxns')))
+          : ListView(children: txns.map<Widget>((tx) => ListTile(
+              title: Text(tx['type'] == 'CASHBACK' ? t('cashback') : t('payout')),
+              subtitle: Text(tx['ref'] ?? ''),
+              trailing: Text('${tx['type'] == 'CASHBACK' ? '+' : '−'}${rupees(tx['amount'])}'),
             )).toList())),
     ]);
   }
