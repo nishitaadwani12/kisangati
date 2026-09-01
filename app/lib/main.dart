@@ -422,19 +422,32 @@ class CatalogTab extends StatefulWidget {
 class _CatalogTabState extends State<CatalogTab> {
   List? _skus;
   String _err = '';
+  final Map<String, int> _cart = {}; // skuId → qty
+  bool _placing = false;
+
   Future<void> _load() async {
     try { final s = await Api.catalog(''); setState(() => _skus = s); } catch (e) { setState(() => _err = '$e'); }
   }
   @override
   void initState() { super.initState(); _load(); }
 
-  Future<void> _order(Map sku) async {
+  Map? _skuById(String id) { for (final s in _skus!) { if (s['id'] == id) return s as Map; } return null; }
+  int get _cartCount => _cart.values.fold(0, (a, b) => a + b);
+  int get _cartTotalPaise => _cart.entries.fold(0, (sum, e) => sum + (e.value * ((_skuById(e.key)?['price'] ?? 0) as int)));
+
+  void _add(String id) => setState(() => _cart[id] = (_cart[id] ?? 0) + 1);
+  void _remove(String id) => setState(() { final q = (_cart[id] ?? 0) - 1; if (q <= 0) { _cart.remove(id); } else { _cart[id] = q; } });
+
+  Future<void> _placeOrder() async {
+    setState(() => _placing = true);
     try {
-      await Api.placeOrder(items: [{'skuId': sku['id'], 'qty': 1}]);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('ordered').replaceFirst('{name}', sku['name']))));
+      final items = _cart.entries.map((e) => {'skuId': e.key, 'qty': e.value}).toList();
+      await Api.placeOrder(items: items);
+      setState(() => _cart.clear());
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('orderPlaced'))));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    }
+    } finally { if (mounted) setState(() => _placing = false); }
   }
 
   @override
@@ -442,16 +455,39 @@ class _CatalogTabState extends State<CatalogTab> {
     if (_err.isNotEmpty) return Center(child: Text(_err));
     if (_skus == null) return const Center(child: CircularProgressIndicator());
     if (_skus!.isEmpty) return Center(child: Text(t('noParts')));
-    return ListView(
-      children: _skus!.map<Widget>((s) => ListTile(
-        title: Text(s['name']),
-        subtitle: Text([s['brand'], s['modelCompat']].where((x) => x != null).join(' · ')),
-        trailing: Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, children: [
-          Text(rupees(s['price'])),
-          FilledButton(onPressed: () => _order(s), child: Text(t('order'))),
-        ]),
-      )).toList(),
-    );
+    return Column(children: [
+      Expanded(child: ListView(
+        children: _skus!.map<Widget>((s) {
+          final id = s['id'] as String;
+          final qty = _cart[id] ?? 0;
+          return ListTile(
+            title: Text(s['name']),
+            subtitle: Text([s['brand'], s['modelCompat']].where((x) => x != null).join(' · ')),
+            trailing: Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 6, children: [
+              Text(rupees(s['price'])),
+              if (qty == 0)
+                FilledButton(onPressed: () => _add(id), child: Text(t('add')))
+              else ...[
+                IconButton(onPressed: () => _remove(id), icon: const Icon(Icons.remove_circle_outline)),
+                Text('$qty', style: const TextStyle(fontWeight: FontWeight.bold)),
+                IconButton(onPressed: () => _add(id), icon: const Icon(Icons.add_circle_outline)),
+              ],
+            ]),
+          );
+        }).toList(),
+      )),
+      if (_cart.isNotEmpty) Material(
+        elevation: 8,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(children: [
+            Expanded(child: Text(t('cartSummary').replaceFirst('{n}', '$_cartCount').replaceFirst('{total}', rupees(_cartTotalPaise)),
+                style: const TextStyle(fontWeight: FontWeight.w600))),
+            FilledButton.icon(onPressed: _placing ? null : _placeOrder, icon: const Icon(Icons.shopping_cart_checkout), label: Text(t('placeOrder'))),
+          ]),
+        ),
+      ),
+    ]);
   }
 }
 
