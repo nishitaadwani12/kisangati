@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -205,13 +206,106 @@ class _OrdersTabState extends State<OrdersTab> {
       child: ListView(
         children: _orders!.map<Widget>((o) {
           final total = (o['total'] ?? 0) as int;
+          final hasMedia = (o['mediaUrl'] as String?)?.startsWith('/media') ?? false;
           return ListTile(
+            leading: hasMedia ? Icon(_isAudio(o['mediaUrl']) ? Icons.mic : Icons.image, color: green) : null,
             title: Text(o['rawText'] ?? t('nItems').replaceFirst('{n}', '${(o['items'] as List).length}')),
             subtitle: Text(t('status.${o['status']}')),
             trailing: Text(total > 0 ? rupees(total) : '—'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => OrderDetailScreen(order: o))),
           );
         }).toList(),
       ),
+    );
+  }
+}
+
+bool _isAudio(String? url) => url != null && RegExp(r'\.(m4a|ogg|mp3|aac|wav)$', caseSensitive: false).hasMatch(url);
+bool _isImage(String? url) => url != null && RegExp(r'\.(jpg|jpeg|png|webp|gif)$', caseSensitive: false).hasMatch(url);
+
+class OrderDetailScreen extends StatefulWidget {
+  final Map order;
+  const OrderDetailScreen({super.key, required this.order});
+  @override
+  State<OrderDetailScreen> createState() => _OrderDetailScreenState();
+}
+
+class _OrderDetailScreenState extends State<OrderDetailScreen> {
+  final _player = AudioPlayer();
+  bool _playing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onPlayerComplete.listen((_) { if (mounted) setState(() => _playing = false); });
+  }
+
+  @override
+  void dispose() { _player.dispose(); super.dispose(); }
+
+  Future<void> _togglePlay(String url) async {
+    try {
+      if (_playing) { await _player.pause(); setState(() => _playing = false); }
+      else { await _player.play(UrlSource(url)); setState(() => _playing = true); }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final o = widget.order;
+    final mediaUrl = o['mediaUrl'] as String?;
+    final fullUrl = (mediaUrl != null && mediaUrl.startsWith('/media')) ? '${Api.base}$mediaUrl' : null;
+    final items = (o['items'] as List?) ?? [];
+    final payment = o['payment'] as Map?;
+    final total = (o['total'] ?? 0) as int;
+
+    return Scaffold(
+      appBar: AppBar(backgroundColor: green, foregroundColor: Colors.white, title: Text('${t('orderTitle')} #${(o['id'] as String).substring((o['id'] as String).length - 6)}')),
+      body: ListView(padding: const EdgeInsets.all(16), children: [
+        Row(children: [
+          Chip(label: Text(t('status.${o['status']}'))),
+          const Spacer(),
+          if (total > 0) Text(rupees(total), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ]),
+        if (o['rawText'] != null) Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text('“${o['rawText']}”', style: const TextStyle(fontSize: 16))),
+
+        // Attached media
+        if (fullUrl != null && _isImage(fullUrl)) ...[
+          const SizedBox(height: 8),
+          ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(fullUrl, height: 240, fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const Text('Could not load photo'))),
+        ],
+        if (fullUrl != null && _isAudio(fullUrl)) ...[
+          const SizedBox(height: 8),
+          Card(child: ListTile(
+            leading: Icon(_playing ? Icons.pause_circle : Icons.play_circle, color: green, size: 40),
+            title: Text(t('voiceLabel')),
+            subtitle: Text(_playing ? t('pause') : t('play')),
+            onTap: () => _togglePlay(fullUrl),
+          )),
+        ],
+
+        if (items.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(t('items'), style: const TextStyle(fontWeight: FontWeight.w600)),
+          ...items.map<Widget>((it) {
+            final sku = it['sku'] as Map?;
+            return ListTile(
+              dense: true,
+              title: Text(sku?['name'] ?? 'part'),
+              subtitle: Text('${t('qty')}: ${it['qty']}'),
+              trailing: Text(rupees((it['qty'] as int) * (it['unitPrice'] as int))),
+            );
+          }),
+        ],
+
+        if (payment != null) Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text('${t('payment')}: ${payment['status']}', style: const TextStyle(color: Colors.black54)),
+        ),
+      ]),
     );
   }
 }
