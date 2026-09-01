@@ -304,6 +304,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  Future<void> _reorder() async {
+    final o = widget.order;
+    final items = (o['items'] as List?) ?? [];
+    try {
+      if (items.isNotEmpty) {
+        await Api.placeOrder(items: items.map<Map<String, dynamic>>((it) => {'skuId': it['skuId'], 'qty': it['qty']}).toList());
+      } else {
+        await Api.placeOrder(rawText: o['rawText'] as String?, mediaUrl: o['mediaUrl'] as String?);
+      }
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('reordered')))); Navigator.of(context).pop(); }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final o = widget.order;
@@ -357,6 +372,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: Text('${t('payment')}: ${payment['status']}', style: const TextStyle(color: Colors.black54)),
         ),
+
+        const SizedBox(height: 24),
+        FilledButton.icon(onPressed: _reorder, icon: const Icon(Icons.replay), label: Text(t('reorder'))),
       ]),
     );
   }
