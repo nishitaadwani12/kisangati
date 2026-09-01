@@ -125,6 +125,10 @@ export function OrderDetail() {
         </div>
       )}
 
+      {["RECEIVED", "QUOTED", "PAID"].includes(order.status) && <CancelOrder id={id} onDone={load} setErr={setErr} setMsg={setMsg} />}
+
+      {order.payment?.refundStatus === "DUE" && <RefundBox id={id} amountPaise={order.total} onDone={load} setErr={setErr} setMsg={setMsg} />}
+
       {order.payment && (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>{t("payment")}</h3>
@@ -132,6 +136,8 @@ export function OrderDetail() {
             {order.payment.method} · {order.payment.status}
             {order.payment.utr && <> · UTR <code>{order.payment.utr}</code></>}
             {order.payment.confirmedBy && <> · {t("by")} {order.payment.confirmedBy}</>}
+            {order.payment.refundStatus && <> · {order.payment.refundStatus === "DUE" ? t("refundDue") : t("refundCompleted")}
+              {order.payment.refundUtr && <> (UTR <code>{order.payment.refundUtr}</code>)</>}</>}
           </p>
         </div>
       )}
@@ -238,6 +244,48 @@ function Dispatch({ id, onDone, setErr }: { id: string; onDone: () => void; setE
           try { await api.dispatch(id, route.trim(), conductor.trim()); onDone(); }
           catch (e) { setErr((e as Error).message); }
         }}>{t("markDispatched")}</button>
+      </div>
+    </div>
+  );
+}
+
+function CancelOrder({ id, onDone, setErr, setMsg }: { id: string; onDone: () => void; setErr: (s: string) => void; setMsg: (s: string) => void }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const reasons = [t("reasonCustomer"), t("reasonStock"), t("reasonDuplicate"), t("reasonOther")];
+  const [reason, setReason] = useState(reasons[0]);
+  if (!open) return <div className="card"><button className="secondary" onClick={() => setOpen(true)}>{t("cancelOrder")}</button></div>;
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>{t("cancelOrder")}</h3>
+      <div className="row">
+        <div className="field"><label>{t("cancelReason")}</label>
+          <select value={reason} onChange={(e) => setReason(e.target.value)}>{reasons.map((r) => <option key={r}>{r}</option>)}</select>
+        </div>
+        <button className="warn" onClick={async () => {
+          setErr(""); setMsg("");
+          try { const r = await api.cancelOrder(id, reason); setMsg(r.refundDue ? `${t("orderCancelled")} · ${t("refundDue")} ${rupees(r.refundAmountPaise)}` : t("orderCancelled")); onDone(); }
+          catch (e) { setErr((e as Error).message); }
+        }}>{t("confirmCancel")}</button>
+        <button className="secondary" onClick={() => setOpen(false)}>{t("close")}</button>
+      </div>
+    </div>
+  );
+}
+
+function RefundBox({ id, amountPaise, onDone, setErr, setMsg }: { id: string; amountPaise: number; onDone: () => void; setErr: (s: string) => void; setMsg: (s: string) => void }) {
+  const { t } = useI18n();
+  const [utr, setUtr] = useState("");
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>{t("refundDue")}: {rupees(amountPaise)}</h3>
+      <div className="row">
+        <div className="field"><label>{t("refundUtrLabel")}</label><input value={utr} onChange={(e) => setUtr(e.target.value)} /></div>
+        <button onClick={async () => {
+          setErr(""); setMsg("");
+          try { await api.refundOrder(id, utr.trim(), "staff"); setMsg(t("refundDone")); onDone(); }
+          catch (e) { setErr((e as Error).message); }
+        }}>{t("markRefundCompleted")}</button>
       </div>
     </div>
   );

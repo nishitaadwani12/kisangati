@@ -54,7 +54,8 @@ export type Sku = {
 };
 
 export type OrderItem = { id: string; skuId: string; qty: number; unitPrice: number; sku?: Sku };
-export type Payment = { status: string; method: string; utr: string | null; confirmedBy: string | null; amount: number };
+export type Payment = { status: string; method: string; utr: string | null; confirmedBy: string | null; amount: number; refundStatus: string | null; refundUtr: string | null; refundedBy: string | null };
+export type WalletTxn = { id: string; type: string; amount: number; ref: string | null; createdAt: string };
 export type Delivery = { busRoute: string | null; conductorName: string | null; dispatchedAt: string | null; claimedAt: string | null };
 
 export type Order = {
@@ -94,6 +95,10 @@ export const api = {
   dispatch: (id: string, busRoute: string, conductorName: string) =>
     req<{ status: string; busRoute: string; conductorName: string }>(`/orders/${id}/dispatch`, "POST", { busRoute, conductorName }),
   deliver: (id: string) => req<{ cashbackPaise: number }>(`/orders/${id}/deliver`, "POST", {}),
+  cancelOrder: (id: string, reason: string) =>
+    req<{ status: string; refundDue: boolean; refundAmountPaise: number }>(`/orders/${id}/cancel`, "POST", { reason }),
+  refundOrder: (id: string, utr: string, refundedBy: string) =>
+    req<{ refundStatus: string }>(`/orders/${id}/refund`, "POST", { utr, refundedBy }),
 
   skus: (q?: string) => req<Sku[]>(`/skus${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   createSku: (b: Partial<Sku> & { name: string; retailPrice: number }) => req<Sku>("/skus", "POST", b),
@@ -106,6 +111,8 @@ export const api = {
   customers: (q?: string) => req<Customer[]>(`/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   createCustomer: (b: { phone: string; name?: string; userType: string; acquisitionChannel: string }) =>
     req<Customer>("/customers", "POST", b),
+  wallet: (id: string) => req<{ balance: number; txns: WalletTxn[] }>(`/customers/${id}/wallet`),
+  payout: (id: string, utr: string) => req<{ paidOutPaise: number; balance: number }>(`/customers/${id}/payout`, "POST", { utr }),
 
   today: () => req<TodayStats>("/stats/today"),
 };

@@ -55,3 +55,40 @@ customers.post(
     res.status(201).json(user);
   })
 );
+
+// Load a customer within the caller's shop, or throw 404.
+async function getScopedUser(req: Request) {
+  const s = shopFilter(req);
+  const user = await db.user.findUnique({ where: { id: req.params.id } });
+  if (!user || (s !== undefined && s !== user.shopId)) throw new HttpError(404, "Customer not found");
+  return user;
+}
+
+// GET /api/customers/:id/wallet — mistri wallet balance + transaction history
+customers.get(
+  "/:id/wallet",
+  ah(async (req, res) => {
+    const user = await getScopedUser(req);
+    const txns = await db.walletTxn.findMany({ where: { mistriId: user.id }, orderBy: { createdAt: "desc" } });
+    res.json({ balance: user.walletBalance, txns });
+  })
+);
+
+// POST /api/customers/:id/payout — pay out the mistri's FULL wallet balance. body: { utr, paidBy }
+customers.post(
+  "/:id/payout",
+  ah(async (req, res) => {
+    const utr = String(req.body?.utr ?? "").trim();
+    if (!/^[A-Za-z0-9]{6,32}$/.test(utr)) throw new HttpError(400, "a valid payout UTR is required (6–32 alphanumeric)");
+    const user = await getScopedUser(req);
+    if (user.userType !== "MISTRI") throw new HttpError(400, "Only mistris have a wallet");
+    if (user.walletBalance <= 0) throw new HttpError(400, "No balance to pay out");
+
+    const amount = user.walletBalance;
+    await db.$transaction([
+      db.walletTxn.create({ data: { mistriId: user.id, type: "PAYOUT", amount, ref: utr } }),
+      db.user.update({ where: { id: user.id }, data: { walletBalance: 0 } }),
+    ]);
+    res.json({ mistriId: user.id, paidOutPaise: amount, balance: 0 });
+  })
+);

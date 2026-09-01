@@ -39,6 +39,10 @@ const dict: Record<Lang, Record<string, string>> = {
     otpFromCustomer: "OTP from customer", confirmDelivered: "Confirm delivered",
     payment: "Payment", by: "by",
     deliveredCashback: "Delivered ✓ · mistri cashback {amt}", deliveredOk: "Delivered ✓", loading: "Loading…",
+    cancelOrder: "Cancel order", cancelReason: "Reason", confirmCancel: "Confirm cancel", orderCancelled: "Order cancelled",
+    reasonCustomer: "Customer changed mind", reasonStock: "Out of stock", reasonDuplicate: "Duplicate", reasonOther: "Other",
+    refundDue: "Refund due", refundCompleted: "Refund completed", markRefundCompleted: "Mark refund completed",
+    refundUtrLabel: "Refund UTR", refundDone: "Refund recorded",
 
     catalog: "Catalog", addPartTitle: "Add a part", name: "Name", brand: "Brand", modelFit: "Model fit",
     tier: "Tier", farmerPrice: "Farmer ₹", mistriPrice: "Mistri ₹", wholesale: "Wholesale ₹",
@@ -50,6 +54,9 @@ const dict: Record<Lang, Record<string, string>> = {
     ordersCol: "Orders", wallet: "Wallet",
     customerAdded: "Customer added — introduce both the app and WhatsApp at the counter.",
     noCustomers: "No customers yet.",
+    walletTitle: "Wallet — {name}", balance: "Balance", payOut: "Pay out", payoutUtr: "Payout UTR",
+    payoutDone: "Paid out {amt}", noTxns: "No transactions yet.", txnType: "Type", amount: "Amount", ref: "Ref",
+    cashback: "Cashback", payoutLabel: "Payout", close: "Close", viewWallet: "Wallet",
 
     signIn: "Sign in", email: "Email", password: "Password", logout: "Log out",
     show: "Show", hide: "Hide",
@@ -94,6 +101,10 @@ const dict: Record<Lang, Record<string, string>> = {
     otpFromCustomer: "ग्राहक से OTP", confirmDelivered: "डिलीवरी पुष्टि करें",
     payment: "भुगतान", by: "द्वारा",
     deliveredCashback: "डिलीवर ✓ · मिस्त्री कैशबैक {amt}", deliveredOk: "डिलीवर ✓", loading: "लोड हो रहा है…",
+    cancelOrder: "ऑर्डर रद्द करें", cancelReason: "कारण", confirmCancel: "रद्द करने की पुष्टि करें", orderCancelled: "ऑर्डर रद्द हुआ",
+    reasonCustomer: "ग्राहक ने मन बदला", reasonStock: "स्टॉक में नहीं", reasonDuplicate: "डुप्लिकेट", reasonOther: "अन्य",
+    refundDue: "रिफंड बाकी", refundCompleted: "रिफंड पूरा", markRefundCompleted: "रिफंड पूरा दर्ज करें",
+    refundUtrLabel: "रिफंड UTR", refundDone: "रिफंड दर्ज हुआ",
 
     catalog: "कैटलॉग", addPartTitle: "पार्ट जोड़ें", name: "नाम", brand: "ब्रांड", modelFit: "मॉडल फिट",
     tier: "श्रेणी", farmerPrice: "किसान ₹", mistriPrice: "मिस्त्री ₹", wholesale: "थोक ₹",
@@ -105,6 +116,9 @@ const dict: Record<Lang, Record<string, string>> = {
     ordersCol: "ऑर्डर", wallet: "वॉलेट",
     customerAdded: "ग्राहक जोड़ा गया — काउंटर पर ऐप और WhatsApp दोनों बताएँ।",
     noCustomers: "अभी कोई ग्राहक नहीं।",
+    walletTitle: "वॉलेट — {name}", balance: "बैलेंस", payOut: "भुगतान करें", payoutUtr: "पेआउट UTR",
+    payoutDone: "{amt} भुगतान किया", noTxns: "अभी कोई लेन-देन नहीं।", txnType: "प्रकार", amount: "राशि", ref: "रेफ",
+    cashback: "कैशबैक", payoutLabel: "पेआउट", close: "बंद करें", viewWallet: "वॉलेट",
 
     signIn: "साइन इन", email: "ईमेल", password: "पासवर्ड", logout: "लॉग आउट",
     show: "दिखाएँ", hide: "छिपाएँ",

@@ -128,6 +128,10 @@ model Payment {
   confirmedBy String? // staff id (manual confirm)
   confirmedAt DateTime?
   paidAt      DateTime?
+  refundStatus String? // null (n/a) | DUE | COMPLETED — set when a paid order is cancelled
+  refundUtr    String? // UPI reference of the refund payout (audit)
+  refundedBy   String?
+  refundedAt   DateTime?
 }
 
 model Delivery {
@@ -149,6 +153,7 @@ model WalletTxn {
   order     Order?   @relation(fields: [orderId], references: [id])
   type      String // CASHBACK | PAYOUT
   amount    Int // paise
+  ref       String? // payout UPI reference (audit), for PAYOUT txns
   createdAt DateTime @default(now())
 }
 

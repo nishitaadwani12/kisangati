@@ -15,7 +15,9 @@
   Controlled onboarding via a super-admin **Add-shop** flow (no public self-sign-up).
 - **Order lifecycle** end-to-end: `RECEIVED → QUOTED → PAID → DISPATCHED → DELIVERED`, with
   manual **UPI QR** + **UTR-required** payment confirm, dispatch (bus route + conductor),
-  staff-confirmed delivery (**no OTP** — see §6), and mistri cashback.
+  staff-confirmed delivery (**no OTP** — see §6), mistri cashback, **order cancel + refund
+  tracking** (refund DUE→COMPLETED on the payment, with a refund UTR), and **mistri wallet
+  payout + transaction history**.
 - **Two-tier pricing** (farmer vs mistri) with guardrails; **organic catalog** (autocomplete +
   duplicate-proof match-key — no onboarding/stock chore).
 - **WhatsApp intake:** public webhook (token-verified) → routes to a shop by `phone_number_id`,
@@ -124,9 +126,9 @@ schema today; **[PLANNED]** are designed but not yet created.
 - **orders** **[BUILT]** — `id, shop_id, user_id, order_source (WHATSAPP|APP|COUNTER), raw_text, media_url, tractor_brand, model, status, subtotal, delivery_fee, total, created_at, updated_at`
 - **order_items** **[BUILT]** — `id, order_id, sku_id, qty, unit_price` (price snapshotted per line, so history is stable)
 - **skus** **[BUILT]** — `id, shop_id, match_key, name, brand, model_compat, category, retail_price (farmer), mistri_price (nullable — else auto-discount), wholesale_price, weight_g, stock_qty, created_at`. **`match_key`** is a normalized (case/space/punctuation-insensitive) key with `@@unique(shop_id, match_key)` for **duplicate-proof find-or-create** (see §7 organic catalog). **Two-tier pricing:** farmer=`retail_price`, mistri=`mistri_price` (guardrail: wholesale ≤ mistri ≤ retail).
-- **payments** **[BUILT]** — `id, order_id, method (MANUAL_UPI_QR|RAZORPAY), provider_ref (nullable — razorpay id), utr (UPI reference, required at manual confirm — audit), amount, status (PENDING|CONFIRMED), confirmed_by, confirmed_at, paid_at`.
+- **payments** **[BUILT]** — `id, order_id, method (MANUAL_UPI_QR|RAZORPAY), provider_ref, utr (UPI ref, required at manual confirm — audit), amount, status (PENDING|CONFIRMED), confirmed_by, confirmed_at, paid_at, refund_status (null|DUE|COMPLETED — set when a paid order is cancelled), refund_utr, refunded_by, refunded_at`. Refund lives here (not on the order) to keep one clean money ledger.
 - **deliveries** **[BUILT]** — `id, order_id, bus_route, conductor_name, dispatched_at, claimed_at` (`otp_hash` column retained but **deprecated/unused** — OTP-at-stop was dropped)
-- **wallet_txns** **[BUILT]** — `id, mistri_id, order_id, type (CASHBACK|PAYOUT), amount, created_at` — **commission rule (locked): a mistri earns cashback ONLY on orders they place through the app.** Referred farmers ordering directly do not generate mistri commission.
+- **wallet_txns** **[BUILT]** — `id, mistri_id, order_id, type (CASHBACK|PAYOUT), amount, ref (payout UPI reference), created_at` — **commission rule (locked): a mistri earns cashback ONLY on orders they place through the app.** Referred farmers ordering directly do not generate mistri commission. **Payout** is full-balance only: a PAYOUT txn is recorded (with UTR) and `wallet_balance` zeroed atomically.
 - **part_predictions** **[BUILT — table exists, unused until AI]** — `id, order_id, model_version, predicted_sku_id, brand, part_category, predicted_specs (JSON string), confidence, input_media_url, transcript, created_at`
 - **training_examples** **[BUILT — table exists, unused until AI]** — `id, media_url, transcript, resolved_sku_id, resolved_specs (JSON string), labeled_by, source_order_id, split (train|val|test), created_at`
 
@@ -152,6 +154,10 @@ Lets us measure app adoption vs WhatsApp over time and protect mistri attributio
 4. **PACKED** — staff pack the part (implicit; folded into dispatch for the prototype).
 5. **DISPATCHED** — staff record the **bus route + conductor** and **notify the customer** which bus the parcel is on (manual call/WhatsApp now; auto-WhatsApp later).
 6. **DELIVERED** — staff **mark delivered** once the customer confirms receipt (call/WhatsApp) → mistri cashback credited **only if the order was placed by a mistri through the app** (see §4). **No OTP:** there's no village-side checkpoint to verify one and payment is already collected upfront, so a code would only add friction for low-literacy farmers.
+
+**CANCELLED** — allowed only before dispatch (RECEIVED/QUOTED/PAID), with a reason. If the order was
+already paid, the payment is flagged **refund DUE**; staff record the manual refund (UTR) to mark it
+**COMPLETED**. Cancellations are rare because payment is only taken after the part is confirmed available.
 
 ## 7. Features by surface
 

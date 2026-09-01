@@ -200,3 +200,41 @@ orders.post(
     res.json({ orderId: order.id, status: "DELIVERED", cashbackPaise: cashback });
   })
 );
+
+// POST /api/orders/:id/cancel — cancel before dispatch. body: { reason }
+// If the order was already paid, flag the payment as refund DUE (staff refund manually).
+const CANCELLABLE = ["RECEIVED", "QUOTED", "PAID"];
+orders.post(
+  "/:id/cancel",
+  ah(async (req, res) => {
+    const reason = String(req.body?.reason ?? "").trim() || "Cancelled";
+    const order = await db.order.findUnique({ where: { id: req.params.id }, include: { payment: true } });
+    if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
+    if (!CANCELLABLE.includes(order.status)) throw new HttpError(400, `Cannot cancel a ${order.status} order`);
+
+    const wasPaid = order.payment?.status === "CONFIRMED";
+    await db.$transaction(async (tx) => {
+      await tx.order.update({ where: { id: order.id }, data: { status: "CANCELLED", cancelReason: reason } });
+      if (wasPaid) await tx.payment.update({ where: { orderId: order.id }, data: { refundStatus: "DUE" } });
+    });
+    res.json({ orderId: order.id, status: "CANCELLED", refundDue: wasPaid, refundAmountPaise: wasPaid ? order.total : 0 });
+  })
+);
+
+// POST /api/orders/:id/refund — mark a due refund completed. body: { utr, refundedBy }
+orders.post(
+  "/:id/refund",
+  ah(async (req, res) => {
+    const utr = String(req.body?.utr ?? "").trim();
+    if (!/^[A-Za-z0-9]{6,32}$/.test(utr)) throw new HttpError(400, "a valid refund UTR is required (6–32 alphanumeric)");
+    const order = await db.order.findUnique({ where: { id: req.params.id }, include: { payment: true } });
+    if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
+    if (order.payment?.refundStatus !== "DUE") throw new HttpError(400, "No refund is due for this order");
+
+    await db.payment.update({
+      where: { orderId: order.id },
+      data: { refundStatus: "COMPLETED", refundUtr: utr, refundedBy: req.body?.refundedBy ?? "staff", refundedAt: new Date() },
+    });
+    res.json({ orderId: order.id, refundStatus: "COMPLETED", utr });
+  })
+);

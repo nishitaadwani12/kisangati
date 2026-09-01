@@ -25,7 +25,8 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 - **[MVP]** Order detail: play **voice note**, view **photo**, sender phone, raw message text.
 - **[MVP]** **Match to SKU(s)** — search catalog, add one or more line items (qty, unit price).
 - **[MVP]** **Set price** → send order summary + **UPI QR** to the customer's WhatsApp (one click).
-- **[MVP]** Advance status; **cancel** with a reason.
+- **[MVP]** Advance status; **cancel** with a reason (only before dispatch). A cancelled *paid* order flags
+  a **refund due**; staff record the refund UTR to mark it **completed**. Refund state lives on the payment.
 
 ### 2. Payments
 - **[MVP]** **Mark payment received** (manual confirm) → unlocks packing; records who/when.
@@ -54,7 +55,8 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 ### 5. Customers & onboarding
 - **[MVP]** Customer list: phone, name, type (farmer/mistri), acquisition channel, order history.
 - **[MVP]** **Walk-in onboarding** — create customer at counter; introduce app + WhatsApp.
-- **[Later]** Mistri wallet view (cashback balance, payouts).
+- **[MVP]** **Mistri wallet:** view balance + transaction history (cashback + payouts), and **pay out** the
+  full balance (records a PAYOUT txn with UTR, zeroes the balance atomically).
 
 ### 6. AI assist (part identification)
 - **[Parallel-MVP]** **Suggested parts** panel on each order — ranked candidate SKUs + confidence; staff always confirm.
@@ -87,8 +89,12 @@ bus — plus manage catalog and see daily numbers. This is the operational core 
 | POST | `/api/orders/:id/payment/confirm` | Mark payment received (manual). |
 | POST | `/api/orders/:id/dispatch` | Record route/conductor; status DISPATCHED. |
 | POST | `/api/orders/:id/deliver` | Mark delivered (staff-confirmed); credit mistri cashback. |
+| POST | `/api/orders/:id/cancel` | Cancel (pre-dispatch) with reason; flag refund DUE if paid. |
+| POST | `/api/orders/:id/refund` | Record manual refund (UTR); mark refund COMPLETED. |
 | GET/POST/PATCH | `/api/skus` | Catalog CRUD + stock. |
 | GET/POST | `/api/customers` | Customer list + walk-in create. |
+| GET | `/api/customers/:id/wallet` | Mistri balance + transaction history. |
+| POST | `/api/customers/:id/payout` | Pay out full wallet balance (UTR); zero the balance. |
 | GET | `/api/stats/today` | Home dashboard numbers. |
 
 ## Out of scope (for now)
