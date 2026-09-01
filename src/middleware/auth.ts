@@ -26,6 +26,18 @@ export function authRequired(req: Request, _res: Response, next: NextFunction) {
   }
 }
 
+// Prisma where-fragment limiting a query to the caller's shop ({} = super-admin, all shops).
+export function shopWhere(req: Request): Record<string, never> | { shopId: string } {
+  const s = shopFilter(req);
+  return s === undefined ? {} : { shopId: s };
+}
+
+// Whether the caller may access a row belonging to `shopId`.
+export function canAccess(req: Request, shopId: string): boolean {
+  const s = shopFilter(req);
+  return s === undefined || s === shopId;
+}
+
 // The shopId a request may act within. OWNER/STAFF are locked to their own shop.
 // SUPER_ADMIN (network-wide) may target a shop via ?shopId=... ; otherwise sees all (returns undefined).
 export function shopFilter(req: Request): string | undefined {

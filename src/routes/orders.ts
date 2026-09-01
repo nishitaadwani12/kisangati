@@ -3,7 +3,7 @@ import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
 import { deliveryFeeFor, cashbackFor } from "../lib/money";
 import { buildUpiLink } from "../lib/upi";
-import { shopFilter, shopIdForCreate } from "../middleware/auth";
+import { shopWhere, canAccess, shopIdForCreate } from "../middleware/auth";
 
 export const orders = Router();
 
@@ -15,15 +15,6 @@ const ORDER_INCLUDE = {
   partPredictions: { include: { predictedSku: true } },
 };
 
-// Prisma where-fragment limiting to the caller's shop ({} = super-admin, all shops).
-function shopWhere(req: Request) {
-  const s = shopFilter(req);
-  return s === undefined ? {} : { shopId: s };
-}
-function canAccess(req: Request, shopId: string) {
-  const s = shopFilter(req);
-  return s === undefined || s === shopId;
-}
 // Load an order and enforce shop access (404 if outside the caller's shop).
 async function getScopedOrder(req: Request, include?: object) {
   const order = await db.order.findUnique({ where: { id: req.params.id }, include });

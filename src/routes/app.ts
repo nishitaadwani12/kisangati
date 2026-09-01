@@ -55,15 +55,20 @@ app.post(
         data: { shopId: c.shopId, userId: c.userId, orderSource: "APP", rawText: b.rawText ?? null, mediaUrl: b.mediaUrl ?? null, tractorBrand: b.tractorBrand ?? null, model: b.model ?? null, status: "RECEIVED" },
       });
       if (items.length) {
+        // Fetch all referenced SKUs (scoped to this shop) in ONE query, then build the line items.
+        const ids = [...new Set(items.map((it: { skuId: string }) => it.skuId))] as string[];
+        const skus = await tx.sku.findMany({ where: { id: { in: ids }, shopId: c.shopId } });
+        const byId = new Map(skus.map((s) => [s.id, s]));
         let subtotal = 0;
-        for (const it of items) {
-          const sku = await tx.sku.findFirst({ where: { id: it.skuId, shopId: c.shopId } });
+        const rows = items.map((it: { skuId: string; qty?: number }) => {
+          const sku = byId.get(it.skuId);
           if (!sku) throw new HttpError(400, "Unknown part in order");
-          const qty = Number.isInteger(it.qty) && it.qty > 0 ? it.qty : 1;
+          const qty = Number.isInteger(it.qty) && (it.qty as number) > 0 ? (it.qty as number) : 1;
           const unitPrice = priceFor(sku, c.userType);
-          await tx.orderItem.create({ data: { orderId: created.id, skuId: sku.id, qty, unitPrice } });
           subtotal += qty * unitPrice;
-        }
+          return { orderId: created.id, skuId: sku.id, qty, unitPrice };
+        });
+        await tx.orderItem.createMany({ data: rows });
         const deliveryFee = deliveryFeeFor(subtotal);
         await tx.order.update({ where: { id: created.id }, data: { subtotal, deliveryFee, total: subtotal + deliveryFee, status: "QUOTED" } });
         await tx.payment.create({ data: { orderId: created.id, method: "MANUAL_UPI_QR", amount: subtotal + deliveryFee, status: "PENDING" } });

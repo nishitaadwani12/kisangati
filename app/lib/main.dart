@@ -111,17 +111,21 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    Api.shops().then((s) => setState(() { _shops = s; if (s.isNotEmpty) _shopId = s.first['id']; }))
-        .catchError((e) => setState(() => _err = '$e'));
+    Api.shops().then((s) { if (!mounted) return; setState(() { _shops = s; if (s.isNotEmpty) _shopId = s.first['id']; }); })
+        .catchError((e) { if (mounted) setState(() => _err = '$e'); });
   }
+
+  @override
+  void dispose() { _phone.dispose(); _name.dispose(); _code.dispose(); super.dispose(); }
 
   Future<void> _requestOtp() async {
     setState(() { _err = ''; _info = ''; _busy = true; });
     try {
       final r = await Api.requestOtp(_shopId!, _phone.text.trim());
+      if (!mounted) return;
       setState(() { _otpSent = true; if (r['devCode'] != null) { _code.text = r['devCode']; _info = 'Dev code: ${r['devCode']}'; } });
-    } catch (e) { setState(() => _err = '$e'); }
-    finally { setState(() => _busy = false); }
+    } catch (e) { if (mounted) setState(() => _err = '$e'); }
+    finally { if (mounted) setState(() => _busy = false); }
   }
 
   Future<void> _verify() async {
@@ -129,8 +133,8 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await Api.verifyOtp(_shopId!, _phone.text.trim(), _code.text.trim(), _name.text.trim());
       widget.onLoggedIn();
-    } catch (e) { setState(() => _err = '$e'); }
-    finally { setState(() => _busy = false); }
+    } catch (e) { if (mounted) setState(() => _err = '$e'); }
+    finally { if (mounted) setState(() => _busy = false); }
   }
 
   @override
@@ -191,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Api.me().then((m) => setState(() => _me = m)).catchError((e) => setState(() => _err = '$e'));
+    Api.me().then((m) { if (mounted) setState(() => _me = m); }).catchError((e) { if (mounted) setState(() => _err = '$e'); });
   }
 
   Future<void> _logout() async { await Api.logout(); widget.onLogout(); }
@@ -239,7 +243,7 @@ class _OrdersTabState extends State<OrdersTab> {
   List? _orders;
   String _err = '';
   Future<void> _load() async {
-    try { final o = await Api.orders(); setState(() => _orders = o); } catch (e) { setState(() => _err = '$e'); }
+    try { final o = await Api.orders(); if (mounted) setState(() => _orders = o); } catch (e) { if (mounted) setState(() => _err = '$e'); }
   }
   @override
   void initState() { super.initState(); _load(); }
@@ -399,7 +403,7 @@ class _NewOrderTabState extends State<NewOrderTab> {
   bool _busy = false;
 
   @override
-  void dispose() { _recorder.dispose(); super.dispose(); }
+  void dispose() { _text.dispose(); _recorder.dispose(); super.dispose(); }
 
   Future<void> _pickPhoto(ImageSource source) async {
     setState(() { _err = ''; });
@@ -441,9 +445,9 @@ class _NewOrderTabState extends State<NewOrderTab> {
       final text = _text.text.trim();
       if (text.isEmpty && mediaUrl == null) { setState(() { _err = t('addSomething'); _busy = false; }); return; }
       await Api.placeOrder(rawText: text.isEmpty ? null : text, mediaUrl: mediaUrl);
-      setState(() { _msg = t('orderSent'); _text.clear(); _clearAttach(); });
-    } catch (e) { setState(() => _err = '$e'); }
-    finally { setState(() => _busy = false); }
+      if (mounted) setState(() { _msg = t('orderSent'); _text.clear(); _clearAttach(); });
+    } catch (e) { if (mounted) setState(() => _err = '$e'); }
+    finally { if (mounted) setState(() => _busy = false); }
   }
 
   @override
@@ -506,7 +510,7 @@ class _CatalogTabState extends State<CatalogTab> {
   bool _placing = false;
 
   Future<void> _load() async {
-    try { final s = await Api.catalog(''); setState(() => _skus = s); } catch (e) { setState(() => _err = '$e'); }
+    try { final s = await Api.catalog(''); if (mounted) setState(() => _skus = s); } catch (e) { if (mounted) setState(() => _err = '$e'); }
   }
   @override
   void initState() { super.initState(); _load(); }
@@ -583,7 +587,7 @@ class _WalletTabState extends State<WalletTab> {
   @override
   void initState() {
     super.initState();
-    Api.wallet().then((w) => setState(() => _w = w)).catchError((e) => setState(() => _err = '$e'));
+    Api.wallet().then((w) { if (mounted) setState(() => _w = w); }).catchError((e) { if (mounted) setState(() => _err = '$e'); });
   }
   @override
   Widget build(BuildContext context) {

@@ -1,19 +1,10 @@
-import { Router, Request } from "express";
+import { Router } from "express";
 import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
-import { shopFilter, shopIdForCreate } from "../middleware/auth";
+import { shopWhere, canAccess, shopIdForCreate } from "../middleware/auth";
 import { normalizeKey } from "../lib/text";
 
 export const skus = Router();
-
-function shopWhere(req: Request) {
-  const s = shopFilter(req);
-  return s === undefined ? {} : { shopId: s };
-}
-function canAccess(req: Request, shopId: string) {
-  const s = shopFilter(req);
-  return s === undefined || s === shopId;
-}
 
 // GET /api/skus?q=&lowStock=  — list/search catalog (shop-scoped)
 skus.get(

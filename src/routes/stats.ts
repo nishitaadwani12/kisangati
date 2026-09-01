@@ -1,14 +1,9 @@
-import { Router, Request } from "express";
+import { Router } from "express";
 import { db } from "../db";
 import { ah } from "../lib/http";
-import { shopFilter } from "../middleware/auth";
+import { shopWhere } from "../middleware/auth";
 
 export const stats = Router();
-
-function shopWhere(req: Request) {
-  const s = shopFilter(req);
-  return s === undefined ? {} : { shopId: s };
-}
 
 // GET /api/stats/today — home dashboard numbers (shop-scoped).
 stats.get(

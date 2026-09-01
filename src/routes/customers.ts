@@ -1,17 +1,12 @@
 import { Router, Request } from "express";
 import { db } from "../db";
 import { ah, HttpError } from "../lib/http";
-import { shopFilter, shopIdForCreate } from "../middleware/auth";
+import { shopFilter, shopWhere, shopIdForCreate } from "../middleware/auth";
 
 export const customers = Router();
 
 const USER_TYPES = ["FARMER", "MISTRI"];
 const CHANNELS = ["WALK_IN", "WHATSAPP", "MISTRI_REFERRAL", "APP"];
-
-function shopWhere(req: Request) {
-  const s = shopFilter(req);
-  return s === undefined ? {} : { shopId: s };
-}
 
 // GET /api/customers?q=  — list with order counts (shop-scoped)
 customers.get(

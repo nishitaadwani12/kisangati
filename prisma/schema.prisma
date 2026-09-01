@@ -82,6 +82,10 @@ model Order {
   delivery        Delivery?
   walletTxns      WalletTxn[]
   partPredictions PartPrediction[]
+
+  @@index([shopId, status])
+  @@index([shopId, createdAt])
+  @@index([userId])
 }
 
 model OrderItem {
@@ -92,6 +96,9 @@ model OrderItem {
   sku       Sku    @relation(fields: [skuId], references: [id])
   qty       Int    @default(1)
   unitPrice Int // paise
+
+  @@index([orderId])
+  @@index([skuId])
 }
 
 model Sku {
@@ -132,6 +139,8 @@ model Payment {
   refundUtr    String? // UPI reference of the refund payout (audit)
   refundedBy   String?
   refundedAt   DateTime?
+
+  @@index([status, confirmedAt])
 }
 
 model Delivery {
@@ -155,6 +164,9 @@ model WalletTxn {
   amount    Int // paise
   ref       String? // payout UPI reference (audit), for PAYOUT txns
   createdAt DateTime @default(now())
+
+  @@index([mistriId, createdAt])
+  @@index([orderId])
 }
 
 model PartPrediction {
@@ -171,6 +183,8 @@ model PartPrediction {
   inputMediaUrl String?
   transcript    String?
   createdAt     DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model TrainingExample {
