@@ -2,19 +2,15 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./styles.css";
-import { applyTheme, getTheme } from "./theme";
 import { LangProvider } from "./i18n";
-
-// Apply the saved theme before first paint (avoids a flash of the default palette).
-applyTheme(getTheme());
 import { AuthProvider, useAuth } from "./auth";
 import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";
 import { Home } from "./pages/Home";
 import { Orders } from "./pages/Orders";
 import { OrderDetail } from "./pages/OrderDetail";
-import { Catalog } from "./pages/Catalog";
 import { Customers } from "./pages/Customers";
+import { Mistris } from "./pages/Mistris";
 import { Shops } from "./pages/Shops";
 
 const router = createBrowserRouter([
@@ -25,8 +21,8 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "orders", element: <Orders /> },
       { path: "orders/:id", element: <OrderDetail /> },
-      { path: "catalog", element: <Catalog /> },
       { path: "customers", element: <Customers /> },
+      { path: "mistris", element: <Mistris /> },
       { path: "shops", element: <Shops /> },
     ],
   },

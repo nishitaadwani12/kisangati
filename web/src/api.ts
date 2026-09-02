@@ -79,6 +79,17 @@ export type Order = {
 
 export type TodayStats = { ordersToday: number; salesTodayPaise: number; statusBreakdown: Record<string, number> };
 
+export type Mistri = {
+  id: string;
+  name: string | null;
+  phone: string;
+  walletBalance: number;   // commission owed now
+  totalCashback: number;   // lifetime earned
+  totalPaidOut: number;
+  orderCount: number;
+  lastActivityAt: string | null;
+};
+
 export const api = {
   login: (email: string, password: string) =>
     req<{ token: string; user: MeUser }>("/auth/login", "POST", { email, password }),
@@ -114,6 +125,8 @@ export const api = {
     req<Customer>("/customers", "POST", b),
   wallet: (id: string) => req<{ balance: number; txns: WalletTxn[] }>(`/customers/${id}/wallet`),
   payout: (id: string, utr: string) => req<{ paidOutPaise: number; balance: number }>(`/customers/${id}/payout`, "POST", { utr }),
+
+  mistris: () => req<Mistri[]>("/mistris"),
 
   today: () => req<TodayStats>("/stats/today"),
 };

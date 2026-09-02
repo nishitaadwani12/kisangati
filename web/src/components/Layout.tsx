@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useI18n } from "../i18n";
 import { useAuth } from "../auth";
-import { ThemeSwitcher } from "../theme";
 
 const link = ({ isActive }: { isActive: boolean }) => (isActive ? "active" : "");
 
@@ -23,8 +22,8 @@ export function Layout() {
         <nav>
           <NavLink to="/" end className={link}>{t("nav.home")}</NavLink>
           <NavLink to="/orders" className={link}>{t("nav.orders")}</NavLink>
-          <NavLink to="/catalog" className={link}>{t("nav.catalog")}</NavLink>
           <NavLink to="/customers" className={link}>{t("nav.customers")}</NavLink>
+          <NavLink to="/mistris" className={link}>{t("nav.mistris")}</NavLink>
           {isSuper && <NavLink to="/shops" className={link}>{t("nav.shops")}</NavLink>}
         </nav>
 
@@ -42,7 +41,6 @@ export function Layout() {
             <div className="shopname">{user?.shopName}</div>
           )}
           <div className="whoami">{user?.name || user?.email} · {user?.role}</div>
-          <ThemeSwitcher label={t("theme")} />
           <button className="secondary logout" onClick={logout}>{t("logout")}</button>
         </div>
       </aside>

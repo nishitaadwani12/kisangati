@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
-import { ThemeSwitcher } from "../theme";
 
 export function Login() {
   const { login } = useAuth();
@@ -44,7 +43,6 @@ export function Login() {
           </div>
         </div>
         <button type="submit" disabled={busy || !email || !password} style={{ width: "100%" }}>{t("signIn")}</button>
-        <ThemeSwitcher variant="login" />
       </form>
     </div>
   );

@@ -6,7 +6,10 @@ export type Lang = "en" | "hi";
 const dict: Record<Lang, Record<string, string>> = {
   en: {
     adminDashboard: "Admin dashboard",
-    "nav.home": "Home", "nav.orders": "Orders", "nav.catalog": "Catalog", "nav.customers": "Customers",
+    "nav.home": "Home", "nav.orders": "Orders", "nav.catalog": "Catalog", "nav.customers": "Customers", "nav.mistris": "Mistris",
+
+    mistrisTitle: "Mistris & commissions", totalOwed: "Commission owed", earned: "Earned", paidOutCol: "Paid out",
+    commissionOwed: "Owed now", lastActive: "Last order", activeMistris: "Mistris", noMistris: "No mistris yet.",
 
     today: "Today", ordersToday: "Orders today", confirmedSalesToday: "Confirmed sales today",
     ordersByStatus: "Orders by status (all time)", noOrdersYet: "No orders yet.",
@@ -68,7 +71,10 @@ const dict: Record<Lang, Record<string, string>> = {
   },
   hi: {
     adminDashboard: "एडमिन डैशबोर्ड",
-    "nav.home": "होम", "nav.orders": "ऑर्डर", "nav.catalog": "कैटलॉग", "nav.customers": "ग्राहक",
+    "nav.home": "होम", "nav.orders": "ऑर्डर", "nav.catalog": "कैटलॉग", "nav.customers": "ग्राहक", "nav.mistris": "मिस्त्री",
+
+    mistrisTitle: "मिस्त्री और कमीशन", totalOwed: "कमीशन बकाया", earned: "कमाया", paidOutCol: "भुगतान किया",
+    commissionOwed: "अभी बकाया", lastActive: "आख़िरी ऑर्डर", activeMistris: "मिस्त्री", noMistris: "अभी कोई मिस्त्री नहीं।",
 
     today: "आज", ordersToday: "आज के ऑर्डर", confirmedSalesToday: "आज की पुष्ट बिक्री",
     ordersByStatus: "स्थिति अनुसार ऑर्डर (कुल)", noOrdersYet: "अभी कोई ऑर्डर नहीं।",

@@ -19,12 +19,14 @@ export function Home() {
       {stats && (
         <>
           <div className="row">
-            <div className="card" style={{ flex: 1 }}>
-              <div className="muted">{t("ordersToday")}</div>
+            <div className="card stat-card" style={{ flex: 1 }}>
+              <div className="stat-ico">🧾</div>
+              <div className="stat-label">{t("ordersToday")}</div>
               <div className="stat">{stats.ordersToday}</div>
             </div>
-            <div className="card" style={{ flex: 1 }}>
-              <div className="muted">{t("confirmedSalesToday")}</div>
+            <div className="card stat-card" style={{ flex: 1 }}>
+              <div className="stat-ico">₹</div>
+              <div className="stat-label">{t("confirmedSalesToday")}</div>
               <div className="stat">{rupees(stats.salesTodayPaise)}</div>
             </div>
           </div>

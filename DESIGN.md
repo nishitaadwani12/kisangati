@@ -24,14 +24,16 @@
   creates a `RECEIVED` order from text/voice/photo, dedupes retries, sends a Hindi auto-reply,
   and **downloads the voice/photo file** (stored under `/media`, playable/viewable in the dashboard).
 - **Customer app API:** phone+OTP customer auth (customer JWT, isolated from admin), shop list,
-  catalog priced by the customer's role, place order (catalog→QUOTED / voice-photo-text→RECEIVED),
-  my orders, mistri wallet, media upload. CORS enabled for the app.
+  place order (voice-photo-text→RECEIVED), my orders, mistri wallet, media upload. CORS enabled for the app.
 - **Flutter customer app (farmer + mistri):** shop-select + phone/OTP login, My Orders + **order
   detail with photo view / voice-note playback**, **New Order by text / photo (camera+gallery) /
-  voice recording**, mistri **Catalog + cart (multi-item)** + Wallet, **reorder**, **HI|EN toggle**,
-  colored status chips + empty states. **Runs on the Android emulator and web (Chrome).**
-- **React/Vite admin dashboard**: login, orders inbox + detail workflow, catalog, customers,
-  home stats, super-admin **Shops** page + shop switcher, **HI|EN** language toggle.
+  voice recording**, mistri **Wallet**, **reorder**, **HI|EN toggle**, colored status chips + empty
+  states. **Mistris order the same zero-friction way as farmers** (no catalog/cart form — both user
+  types are often low-literacy). **Runs on the Android emulator and web (Chrome).**
+- **React/Vite admin dashboard**: login, orders inbox + detail workflow, customers, **Mistris &
+  commissions** page, home stats, super-admin **Shops** page + shop switcher, **HI|EN** toggle, and a
+  single modern theme (emerald→teal gradient, soft depth). No catalog-management screen — parts/prices
+  accrue on the fly as staff quote orders (organic catalog, §7).
 - Money stored in **paise** (integers) throughout. Demo seed across two shops.
 
 **Not built yet (planned):** the `ml-service` (part-ID + STT), Redis, Razorpay auto-confirm,
@@ -60,7 +62,7 @@ There are **two kinds of identity** (don't conflate them):
 | Who | Surface | Experience |
 |---|---|---|
 | `FARMER` (customer) | Customer app + WhatsApp | Zero-friction: voice-note / photo ordering, big icons, Hindi voice UI. |
-| `MISTRI` (customer) | Customer app | Full catalog by brand/model, cart, reorder, **wallet/cashback (3–5%)**, referrals. |
+| `MISTRI` (customer) | Customer app | Same zero-friction ordering as farmers (voice / photo / text — no catalog form), **reorder**, **wallet/cashback (3–5%)**, referrals. |
 | `OWNER` / `STAFF` (login) | Web dashboard | Their shop only: inbox, part match, UPI QR + manual confirm, dispatch (route + conductor), mark delivered, walk-in onboarding, analytics. |
 | `SUPER_ADMIN` (login) | Web dashboard | Network-wide view across all shops + shop switcher; onboards new shops. |
 
@@ -106,7 +108,7 @@ Single shared database. Every order and user is tagged for audit/analytics (see 
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Customer app | **Flutter (Dart)** | **[BUILT]** Farmers + mistris; runs on Android emulator + web. Libs: `http`, `shared_preferences`, `image_picker`, `record`, `audioplayers`, `path_provider`. Login, orders + detail (photo/voice playback), text/photo/voice ordering, mistri cart, wallet, reorder, HI\|EN. Offline cache + push next. |
+| Customer app | **Flutter (Dart)** | **[BUILT]** Farmers + mistris; runs on Android emulator + web. Libs: `http`, `shared_preferences`, `image_picker`, `record`, `audioplayers`, `path_provider`. Login, orders + detail (photo/voice playback), text/photo/voice ordering (same for farmers and mistris), mistri wallet, reorder, HI\|EN. Offline cache + push next. |
 | Admin dashboard | **React + Vite (web)** | **[BUILT]** Internal, operated by us. Fast to iterate; back-office only. Long-term becomes the multi-tenant seller portal. |
 | App ↔ API | **CORS** enabled; base URL `localhost` (web) / `10.0.2.2` (Android emulator) | **[BUILT]** Cleartext HTTP allowed in the dev Android manifest; restrict + HTTPS before prod. |
 | Backend/API | **Node.js + TypeScript + Express** | REST + JSON. **[BUILT]** All money handled in **paise** (integers) — no floats. |
@@ -177,18 +179,20 @@ carries the QR; it is not the payment processor.
 **App — FARMER mode [BUILT]:** phone/OTP login • text / **photo (camera+gallery)** / **voice-note**
 ordering • My Orders + order detail (view photo / play voice) • reorder • HI|EN. Push + offline **[PLANNED]**.
 
-**App — MISTRI mode [BUILT]:** catalog by role price • **cart (multi-item)** • wallet (balance + history)
-• My Orders + detail • reorder • HI|EN. UPI checkout, push, refer-a-farmer **[PLANNED]**.
-**Cashback accrues only on app-placed orders.**
+**App — MISTRI mode [BUILT]:** identical ordering to farmers (text / photo / voice — **no catalog or
+cart form**, since mistris are often low-literacy too) • **Wallet** (cashback balance + history) • My
+Orders + detail • reorder • HI|EN. UPI checkout, push, refer-a-farmer **[PLANNED]**.
+**Cashback accrues only on app-placed mistri orders.**
 
-**Web dashboard — login roles (internal) [BUILT]:** email+password login • **HI|EN toggle** •
-unified orders inbox (filter by status) + order detail workflow • match part via **organic
-catalog** (type-ahead over saved parts; create once if new; duplicate-proof) at the correct
-**two-tier price by customer type** • set price → generate **UPI QR** • **mark paid with UTR**
-• dispatch (record bus route + conductor, notify customer) • mark delivered • walk-in customer onboarding
-• home stats. `OWNER`/`STAFF` see only their shop; **`SUPER_ADMIN`** adds shops and switches
-between them for a network-wide view. *(AI part-suggestion panel is [PLANNED], slots into the
-order detail.)*
+**Web dashboard — login roles (internal) [BUILT]:** email+password login • **HI|EN toggle** • single
+modern theme (emerald→teal gradient, soft depth, subtle motion) • unified orders inbox (filter by
+status) + order detail workflow • match part via **organic catalog** (type-ahead over saved parts;
+create once if new; duplicate-proof) at the correct **two-tier price by customer type** • set price →
+generate **UPI QR** • **mark paid with UTR** • dispatch (record bus route + conductor, notify customer)
+• mark delivered • walk-in customer onboarding • **Mistris & commissions** page (per-mistri owed /
+earned / paid-out / orders roll-up + full-balance payout; `GET /api/mistris`) • home stats.
+`OWNER`/`STAFF` see only their shop; **`SUPER_ADMIN`** adds shops and switches between them for a
+network-wide view. *(AI part-suggestion panel is [PLANNED], slots into the order detail.)*
 
 **Organic catalog (no onboarding burden) [BUILT]:** the shop never pre-enters or counts
 inventory. Parts are typed once at order time; a **normalized match-key** with find-or-create
@@ -208,16 +212,16 @@ so today's schema leaves room (e.g. mistri geo + availability fields).
 Prove the order → pay → dispatch loop with real money before building the polished app.
 
 1. **Backend + DB** — the shared brain (Prisma schema, migrations). **[DONE]**
-2. **Web admin dashboard (React/Vite)** — process real orders; catalog; walk-in onboarding. **[DONE]**
+2. **Web admin dashboard (React/Vite)** — process real orders; organic-catalog pricing at order time; walk-in onboarding; mistri commissions. **[DONE]**
 3. **Multi-tenant auth** — Shop/AdminUser, JWT, roles, shop isolation, super-admin onboarding.
    **[DONE]** (pulled forward — a relative's shop is a real second tenant for testing).
 4. **WhatsApp intake** — farmers, no app needed. Webhook → order + Hindi auto-reply. **[DONE]**
    (media download + in-chat UPI QR delivery are the remaining pieces.)
 5. **`ml-service` Phase 1 (in parallel)** — Python service with a multimodal-LLM + catalog-RAG
    part suggester to assist staff. Real accuracy still depends on the real-photo dataset. **[PLANNED]**
-6. **Farmer + Mistri app modes** — Flutter app + customer API. **[BUILT]** login, text/photo/voice ordering,
-   order detail w/ media playback, mistri cart, wallet, reorder, HI|EN — running on the Android emulator + web.
-   Remaining: push, offline cache, UPI checkout, deployment.
+6. **Farmer + Mistri app modes** — Flutter app + customer API. **[BUILT]** login, text/photo/voice ordering
+   (identical for farmers and mistris), order detail w/ media playback, mistri wallet, reorder, HI|EN —
+   running on the Android emulator + web. Remaining: push, offline cache, UPI checkout, deployment.
 
 Deferred until the loop works: full custom-trained model (Phase 2), the mistri services
 marketplace, the multi-tenant seller platform, any production deployment.

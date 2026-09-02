@@ -13,6 +13,7 @@ import { shops } from "./routes/shops";
 import { orders } from "./routes/orders";
 import { skus } from "./routes/skus";
 import { customers } from "./routes/customers";
+import { mistris } from "./routes/mistris";
 import { stats } from "./routes/stats";
 import { appAuth } from "./routes/appAuth";
 import { app as appRoutes } from "./routes/app";
@@ -46,6 +47,7 @@ export function createApp() {
   app.use("/api/orders", authRequired, orders);
   app.use("/api/skus", authRequired, skus);
   app.use("/api/customers", authRequired, customers);
+  app.use("/api/mistris", authRequired, mistris);
   app.use("/api/stats", authRequired, stats);
 
   app.use("/app/auth", authLimiter, appAuth);
