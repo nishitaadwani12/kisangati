@@ -51,6 +51,19 @@ async function seedShop(token, skus, custDefs, orderPlan) {
 async function main() {
   console.log(`Seeding demo data → ${BASE}`);
 
+  // Wipe existing rows first (FK-safe order) so the seed is re-runnable without a full db:reset.
+  await db.walletTxn.deleteMany();
+  await db.payment.deleteMany();
+  await db.delivery.deleteMany();
+  await db.orderItem.deleteMany();
+  await db.partPrediction.deleteMany();
+  await db.trainingExample.deleteMany();
+  await db.order.deleteMany();
+  await db.user.deleteMany();
+  await db.adminUser.deleteMany();
+  await db.sku.deleteMany();
+  await db.shop.deleteMany();
+
   // Shops + login accounts (created directly; login itself needs them to exist first).
   // Stable ids so re-seeding doesn't invalidate a running app's cached shop list.
   const shop1 = await db.shop.create({ data: { id: "shop-satram", name: "Satram Tractors", town: "Jhansi", whatsappPhoneNumberId: "TEST_PNID_SHOP1" } });
