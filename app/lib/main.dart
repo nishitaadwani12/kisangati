@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -404,6 +405,8 @@ class NewOrderTab extends StatefulWidget {
 class _NewOrderTabState extends State<NewOrderTab> {
   final _text = TextEditingController();
   final _recorder = AudioRecorder();
+  final _preview = AudioPlayer();
+  int? _previewIdx; // index of the attachment currently previewing
   final List<({List<int> bytes, String name, String kind})> _attachments = [];
   bool _recording = false;
   String _msg = '';
@@ -411,7 +414,27 @@ class _NewOrderTabState extends State<NewOrderTab> {
   bool _busy = false;
 
   @override
-  void dispose() { _text.dispose(); _recorder.dispose(); super.dispose(); }
+  void initState() {
+    super.initState();
+    _preview.onPlayerComplete.listen((_) { if (mounted) setState(() => _previewIdx = null); });
+  }
+
+  @override
+  void dispose() { _text.dispose(); _recorder.dispose(); _preview.dispose(); super.dispose(); }
+
+  // Play back a just-recorded voice note (from memory) so the farmer can check it before sending.
+  Future<void> _togglePreview(int i) async {
+    try {
+      if (_previewIdx == i) { await _preview.stop(); if (mounted) setState(() => _previewIdx = null); }
+      else {
+        await _preview.stop();
+        await _preview.play(BytesSource(Uint8List.fromList(_attachments[i].bytes)));
+        if (mounted) setState(() => _previewIdx = i);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
 
   Future<void> _pickPhoto(ImageSource source) async {
     setState(() { _err = ''; });
@@ -488,11 +511,19 @@ class _NewOrderTabState extends State<NewOrderTab> {
         ]),
         if (_attachments.isNotEmpty) Padding(
           padding: const EdgeInsets.only(top: 10),
-          child: Wrap(spacing: 8, runSpacing: 8, children: _attachments.asMap().entries.map((e) => Chip(
-            avatar: Icon(e.value.kind == 'voice' ? Icons.mic : Icons.image, size: 18),
-            label: Text(e.value.kind == 'voice' ? t('voiceAttached') : e.value.name),
-            onDeleted: () => setState(() => _attachments.removeAt(e.key)),
-          )).toList()),
+          child: Wrap(spacing: 8, runSpacing: 8, children: _attachments.asMap().entries.map((e) {
+            void del() => setState(() { _attachments.removeAt(e.key); _previewIdx = null; });
+            if (e.value.kind == 'voice') {
+              final playing = _previewIdx == e.key;
+              return InputChip(
+                avatar: Icon(playing ? Icons.pause : Icons.play_arrow, size: 18),
+                label: Text(t('voiceAttached')),
+                onPressed: () => _togglePreview(e.key),
+                onDeleted: del,
+              );
+            }
+            return Chip(avatar: const Icon(Icons.image, size: 18), label: Text(e.value.name), onDeleted: del);
+          }).toList()),
         ),
         const SizedBox(height: 16),
         FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.send), label: Text(_busy ? t('sending') : t('sendOrder'))),
