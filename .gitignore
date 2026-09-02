@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 *.log
+coverage/
 
 # Local prototype data (keep father's real shop data out of git)
 media/

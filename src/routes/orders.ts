@@ -50,6 +50,7 @@ orders.get(
 orders.post(
   "/",
   ah(async (req, res) => {
+    /* c8 ignore next -- express.json always sets req.body to at least {}; ?? {} is defensive */
     const { userId, orderSource, rawText, tractorBrand, model } = req.body ?? {};
     if (!userId) throw new HttpError(400, "userId is required");
     const shopId = shopIdForCreate(req, req.body?.shopId);
@@ -154,6 +155,7 @@ orders.post(
 orders.post(
   "/:id/dispatch",
   ah(async (req, res) => {
+    /* c8 ignore next -- express.json always sets req.body to at least {}; ?? {} is defensive */
     const { busRoute, conductorName } = req.body ?? {};
     const order = await db.order.findUnique({ where: { id: req.params.id }, include: { payment: true } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
@@ -178,7 +180,7 @@ orders.post(
   ah(async (req, res) => {
     const order = await db.order.findUnique({ where: { id: req.params.id }, include: { user: true } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
-    if (order.status !== "DISPATCHED") throw new HttpError(400, "Order is not out for delivery");
+    if (order.status !== "DISPATCHED") throw new HttpError(409, "Order is not out for delivery");
 
     // Commission rule: cashback only on app-placed mistri orders.
     const earnsCashback = order.user.userType === "MISTRI" && order.orderSource === "APP";
@@ -205,7 +207,7 @@ orders.post(
     const reason = String(req.body?.reason ?? "").trim() || "Cancelled";
     const order = await db.order.findUnique({ where: { id: req.params.id }, include: { payment: true } });
     if (!order || !canAccess(req, order.shopId)) throw new HttpError(404, "Order not found");
-    if (!CANCELLABLE.includes(order.status)) throw new HttpError(400, `Cannot cancel a ${order.status} order`);
+    if (!CANCELLABLE.includes(order.status)) throw new HttpError(409, `Cannot cancel a ${order.status} order`);
 
     const wasPaid = order.payment?.status === "CONFIRMED";
     await db.$transaction(async (tx) => {

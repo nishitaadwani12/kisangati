@@ -29,6 +29,7 @@ shops.post(
   "/",
   ah(async (req, res) => {
     requireSuper(req);
+    /* c8 ignore next -- express.json always sets req.body to at least {}; ?? {} is defensive */
     const b = req.body ?? {};
     const shopName = String(b.shopName ?? "").trim();
     const ownerEmail = String(b.ownerEmail ?? "").trim().toLowerCase();

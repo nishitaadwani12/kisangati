@@ -67,6 +67,20 @@ npm run db:reset    # clears the database (start clean before entering real orde
 `RECEIVED → QUOTED (send UPI QR) → PAID (manual confirm + UTR) → DISPATCHED (bus + OTP) → DELIVERED (OTP)`.
 Mistri cashback is credited on delivery for app-placed mistri orders only.
 
+## Testing
+Backend tests live in `tst/` (mirrors `src/`) and run on **vitest** + **supertest** against a throwaway
+SQLite DB (`file:./test.db`, reset per test).
+
+```bash
+npm test            # run the suite
+npm run test:cov    # run with coverage (gate: 100% statements/branches/functions/lines)
+```
+
+**Policy — tests ship with each feature.** Every new route, lib function, or branch is added together
+with its test in the same change, so coverage never regresses and we never accumulate a testing backlog.
+`test:cov` enforces the 100% gate; genuinely-unreachable defensive branches are marked with a justified
+`/* c8 ignore */` comment rather than left uncovered.
+
 ## Notes
 - Money is stored in **paise** (integers) everywhere; the UI displays rupees.
 - Secrets live in `.env` (gitignored). Never commit tokens or real shop data.

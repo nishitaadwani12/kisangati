@@ -42,6 +42,7 @@ function validateMistriPrice(mistriPrice: number, retailPrice: number, wholesale
 skus.post(
   "/",
   ah(async (req, res) => {
+    /* c8 ignore next -- express.json always sets req.body to at least {}; ?? {} is defensive */
     const b = req.body ?? {};
     if (!b.name || !Number.isInteger(b.retailPrice) || b.retailPrice < 0)
       throw new HttpError(400, "name and integer retailPrice(paise)>=0 are required");
@@ -79,6 +80,7 @@ skus.post(
 skus.patch(
   "/:id",
   ah(async (req, res) => {
+    /* c8 ignore next -- express.json always sets req.body to at least {}; ?? {} is defensive */
     const b = req.body ?? {};
     const data: Record<string, unknown> = {};
     for (const f of ["name", "brand", "modelCompat", "category"]) if (f in b) data[f] = b[f];
@@ -92,10 +94,13 @@ skus.patch(
 
     const existing = await db.sku.findUnique({ where: { id: req.params.id } });
     if (!existing || !canAccess(req, existing.shopId)) throw new HttpError(404, "SKU not found");
-    if (data.mistriPrice != null) {
+    // Re-validate the effective mistri price against the effective retail/wholesale, so changing
+    // retail or wholesale alone can't leave an invalid stored mistri price.
+    const effMistri = ("mistriPrice" in data ? (data.mistriPrice as number | null) : existing.mistriPrice);
+    if (effMistri != null) {
       const retail = (data.retailPrice as number) ?? existing.retailPrice;
       const wholesale = (data.wholesalePrice as number) ?? existing.wholesalePrice;
-      validateMistriPrice(data.mistriPrice as number, retail, wholesale);
+      validateMistriPrice(effMistri, retail, wholesale);
     }
     // Recompute the dedupe key if identifying fields changed.
     if ("name" in data || "brand" in data || "modelCompat" in data) {

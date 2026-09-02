@@ -46,6 +46,7 @@ app.post(
   "/orders",
   ah(async (req, res) => {
     const c = req.customer!;
+    /* c8 ignore next -- express.json always sets req.body to at least {}; ?? {} is defensive */
     const b = req.body ?? {};
     const items = Array.isArray(b.items) ? b.items : [];
     const mediaUrls: string[] = Array.isArray(b.mediaUrls) ? b.mediaUrls : b.mediaUrl ? [b.mediaUrl] : [];
@@ -127,6 +128,7 @@ const ALLOWED_MIME: Record<string, string> = {
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, MEDIA_DIR),
+    /* c8 ignore next -- fileFilter rejects any mime absent from ALLOWED_MIME, so "bin" is unreachable here */
     filename: (_req, file, cb) => cb(null, `app-${randomUUID()}.${ALLOWED_MIME[file.mimetype] ?? "bin"}`),
   }),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB

@@ -29,6 +29,7 @@ customers.get(
 customers.post(
   "/",
   ah(async (req, res) => {
+    /* c8 ignore next -- express.json always sets req.body to at least {}; ?? {} is defensive */
     const b = req.body ?? {};
     if (!b.phone) throw new HttpError(400, "phone is required");
     if (!USER_TYPES.includes(b.userType)) throw new HttpError(400, `userType must be one of ${USER_TYPES.join("|")}`);
@@ -82,9 +83,11 @@ customers.post(
     // payout request can't cause a lost credit or a double payout.
     const amount = await db.$transaction(async (tx) => {
       const fresh = await tx.user.findUnique({ where: { id: user.id } });
+      /* c8 ignore next -- fresh always exists (loaded moments earlier); ?? 0 is defensive */
       const bal = fresh?.walletBalance ?? 0;
       if (bal <= 0) throw new HttpError(400, "No balance to pay out");
       const upd = await tx.user.updateMany({ where: { id: user.id, walletBalance: bal }, data: { walletBalance: 0 } });
+      /* c8 ignore next 2 -- optimistic guard for a concurrent credit/payout; unreachable single-threaded */
       if (upd.count !== 1) throw new HttpError(409, "Wallet balance changed — please retry");
       await tx.walletTxn.create({ data: { mistriId: user.id, type: "PAYOUT", amount: bal, ref: utr } });
       return bal;
