@@ -47,10 +47,8 @@ const dict: Record<Lang, Record<string, string>> = {
     refundDue: "Refund due", refundCompleted: "Refund completed", markRefundCompleted: "Mark refund completed",
     refundUtrLabel: "Refund UTR", refundDone: "Refund recorded",
 
-    catalog: "Catalog", addPartTitle: "Add a part", name: "Name", brand: "Brand", modelFit: "Model fit",
-    tier: "Tier", farmerPrice: "Farmer ₹", mistriPrice: "Mistri ₹", wholesale: "Wholesale ₹",
-    stock: "Stock", add: "Add", autoDiscount: "auto −10%", searchParts: "Search parts…",
-    search: "Search", noParts: "No parts yet.", fit: "Fit", auto: "auto",
+    name: "Name", brand: "Brand", farmerPrice: "Farmer ₹", mistriPrice: "Mistri ₹",
+    add: "Add", autoDiscount: "auto −10%", search: "Search",
 
     customers: "Customers", onboardWalkin: "Onboard a customer (walk-in)", phone: "Phone",
     type: "Type", channel: "Channel", searchNamePhone: "Search by name or phone…",
@@ -112,10 +110,8 @@ const dict: Record<Lang, Record<string, string>> = {
     refundDue: "रिफंड बाकी", refundCompleted: "रिफंड पूरा", markRefundCompleted: "रिफंड पूरा दर्ज करें",
     refundUtrLabel: "रिफंड UTR", refundDone: "रिफंड दर्ज हुआ",
 
-    catalog: "कैटलॉग", addPartTitle: "पार्ट जोड़ें", name: "नाम", brand: "ब्रांड", modelFit: "मॉडल फिट",
-    tier: "श्रेणी", farmerPrice: "किसान ₹", mistriPrice: "मिस्त्री ₹", wholesale: "थोक ₹",
-    stock: "स्टॉक", add: "जोड़ें", autoDiscount: "ऑटो −10%", searchParts: "पार्ट्स खोजें…",
-    search: "खोजें", noParts: "अभी कोई पार्ट नहीं।", fit: "फिट", auto: "ऑटो",
+    name: "नाम", brand: "ब्रांड", farmerPrice: "किसान ₹", mistriPrice: "मिस्त्री ₹",
+    add: "जोड़ें", autoDiscount: "ऑटो −10%", search: "खोजें",
 
     customers: "ग्राहक", onboardWalkin: "ग्राहक जोड़ें (वॉक-इन)", phone: "फोन",
     type: "प्रकार", channel: "चैनल", searchNamePhone: "नाम या फोन से खोजें…",

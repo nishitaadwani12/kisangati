@@ -60,9 +60,6 @@ class Api {
 
   static Future<Map> me() async => await _get('/app/me') as Map;
 
-  static Future<List> catalog(String q) async =>
-      await _get('/app/catalog${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}') as List;
-
   static Future<Map> placeOrder({List<Map<String, dynamic>>? items, String? rawText, List<String>? mediaUrls}) async {
     final body = <String, dynamic>{};
     if (items != null) body['items'] = items;
