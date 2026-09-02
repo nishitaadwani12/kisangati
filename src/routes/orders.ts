@@ -10,6 +10,7 @@ export const orders = Router();
 const ORDER_INCLUDE = {
   user: true,
   items: { include: { sku: true } },
+  media: true,
   payment: true,
   delivery: true,
   partPredictions: { include: { predictedSku: true } },

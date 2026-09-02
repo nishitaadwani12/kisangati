@@ -63,11 +63,11 @@ class Api {
   static Future<List> catalog(String q) async =>
       await _get('/app/catalog${q.isEmpty ? '' : '?q=${Uri.encodeQueryComponent(q)}'}') as List;
 
-  static Future<Map> placeOrder({List<Map<String, dynamic>>? items, String? rawText, String? mediaUrl}) async {
+  static Future<Map> placeOrder({List<Map<String, dynamic>>? items, String? rawText, List<String>? mediaUrls}) async {
     final body = <String, dynamic>{};
     if (items != null) body['items'] = items;
     if (rawText != null) body['rawText'] = rawText;
-    if (mediaUrl != null) body['mediaUrl'] = mediaUrl;
+    if (mediaUrls != null && mediaUrls.isNotEmpty) body['mediaUrls'] = mediaUrls;
     return await _post('/app/orders', body) as Map;
   }
 

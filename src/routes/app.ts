@@ -6,11 +6,12 @@ import { ah, HttpError } from "../lib/http";
 import { deliveryFeeFor, priceFor } from "../lib/money";
 import { buildUpiLink } from "../lib/upi";
 import { MEDIA_DIR } from "../lib/whatsapp";
+import { mediaKind } from "../lib/media";
 
 // Customer-app API. All routes require a customer token (mounted with customerRequired).
 export const app = Router();
 
-const ORDER_INCLUDE = { items: { include: { sku: true } }, payment: true, delivery: true };
+const ORDER_INCLUDE = { items: { include: { sku: true } }, media: true, payment: true, delivery: true };
 
 // GET /app/me — profile
 app.get(
@@ -39,7 +40,7 @@ app.get(
 );
 
 // POST /app/orders — place an order.
-// body: { items?: [{skuId, qty}], rawText?, mediaUrl?, tractorBrand?, model? }
+// body: { items?: [{skuId, qty}], rawText?, mediaUrls?: string[] (or legacy mediaUrl), tractorBrand?, model? }
 // Catalog (items) orders are priced and go straight to QUOTED; voice/photo/text go to RECEIVED for staff.
 app.post(
   "/orders",
@@ -47,13 +48,16 @@ app.post(
     const c = req.customer!;
     const b = req.body ?? {};
     const items = Array.isArray(b.items) ? b.items : [];
-    if (b.mediaUrl != null && !String(b.mediaUrl).startsWith("/media/")) throw new HttpError(400, "invalid mediaUrl");
+    const mediaUrls: string[] = Array.isArray(b.mediaUrls) ? b.mediaUrls : b.mediaUrl ? [b.mediaUrl] : [];
+    for (const u of mediaUrls) if (!String(u).startsWith("/media/")) throw new HttpError(400, "invalid mediaUrl");
     if (items.length > 50) throw new HttpError(400, "too many items");
+    if (mediaUrls.length > 10) throw new HttpError(400, "too many attachments");
 
     const order = await db.$transaction(async (tx) => {
       const created = await tx.order.create({
-        data: { shopId: c.shopId, userId: c.userId, orderSource: "APP", rawText: b.rawText ?? null, mediaUrl: b.mediaUrl ?? null, tractorBrand: b.tractorBrand ?? null, model: b.model ?? null, status: "RECEIVED" },
+        data: { shopId: c.shopId, userId: c.userId, orderSource: "APP", rawText: b.rawText ?? null, tractorBrand: b.tractorBrand ?? null, model: b.model ?? null, status: "RECEIVED" },
       });
+      if (mediaUrls.length) await tx.orderMedia.createMany({ data: mediaUrls.map((u) => ({ orderId: created.id, url: u, kind: mediaKind(u) })) });
       if (items.length) {
         // Fetch all referenced SKUs (scoped to this shop) in ONE query, then build the line items.
         const ids = [...new Set(items.map((it: { skuId: string }) => it.skuId))] as string[];

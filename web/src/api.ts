@@ -64,6 +64,7 @@ export type Order = {
   status: string;
   rawText: string | null;
   mediaUrl: string | null;
+  media?: { id: string; url: string; kind: string }[];
   tractorBrand: string | null;
   model: string | null;
   subtotal: number;

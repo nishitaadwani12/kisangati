@@ -62,9 +62,17 @@ export function OrderDetail() {
           {order.tractorBrand && <span className="pill">{order.tractorBrand} {order.model}</span>}
         </div>
         {order.rawText && <p style={{ marginBottom: 4 }}>“{order.rawText}”</p>}
-        {order.mediaUrl && (/\.(ogg|mp3|m4a|wav)$/i.test(order.mediaUrl)
-          ? <audio controls src={order.mediaUrl} />
-          : <img src={order.mediaUrl} alt="part" style={{ maxWidth: 260, borderRadius: 8 }} />)}
+        <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
+          {(order.media ?? []).map((m) =>
+            m.kind === "voice"
+              ? <audio key={m.id} controls src={m.url} />
+              : <img key={m.id} src={m.url} alt="part" style={{ maxWidth: 240, borderRadius: 8 }} />
+          )}
+          {/* Legacy single mediaUrl (older WhatsApp orders before media table) */}
+          {order.media?.length === 0 && order.mediaUrl && (/\.(ogg|mp3|m4a|wav)$/i.test(order.mediaUrl)
+            ? <audio controls src={order.mediaUrl} />
+            : <img src={order.mediaUrl} alt="part" style={{ maxWidth: 240, borderRadius: 8 }} />)}
+        </div>
       </div>
 
       {/* Items */}

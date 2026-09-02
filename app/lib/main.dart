@@ -269,9 +269,11 @@ class _OrdersTabState extends State<OrdersTab> {
       child: ListView(
         children: _orders!.map<Widget>((o) {
           final total = (o['total'] ?? 0) as int;
-          final hasMedia = (o['mediaUrl'] as String?)?.startsWith('/media') ?? false;
+          final media = (o['media'] as List?) ?? [];
+          final hasVoice = media.any((m) => m['kind'] == 'voice');
+          final leadingIcon = media.isEmpty ? Icons.receipt_long : (hasVoice ? Icons.mic : Icons.image);
           return ListTile(
-            leading: hasMedia ? Icon(_isAudio(o['mediaUrl']) ? Icons.mic : Icons.image, color: green) : const Icon(Icons.receipt_long, color: Colors.black26),
+            leading: Icon(leadingIcon, color: media.isEmpty ? Colors.black26 : green),
             title: Text(o['rawText'] ?? t('nItems').replaceFirst('{n}', '${(o['items'] as List).length}')),
             subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Align(alignment: Alignment.centerLeft, child: StatusChip(o['status']))),
             trailing: Text(total > 0 ? rupees(total) : '—', style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -283,9 +285,6 @@ class _OrdersTabState extends State<OrdersTab> {
   }
 }
 
-bool _isAudio(String? url) => url != null && RegExp(r'\.(m4a|ogg|mp3|aac|wav)$', caseSensitive: false).hasMatch(url);
-bool _isImage(String? url) => url != null && RegExp(r'\.(jpg|jpeg|png|webp|gif)$', caseSensitive: false).hasMatch(url);
-
 class OrderDetailScreen extends StatefulWidget {
   final Map order;
   const OrderDetailScreen({super.key, required this.order});
@@ -295,12 +294,12 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final _player = AudioPlayer();
-  bool _playing = false;
+  String? _playingUrl;
 
   @override
   void initState() {
     super.initState();
-    _player.onPlayerComplete.listen((_) { if (mounted) setState(() => _playing = false); });
+    _player.onPlayerComplete.listen((_) { if (mounted) setState(() => _playingUrl = null); });
   }
 
   @override
@@ -308,8 +307,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _togglePlay(String url) async {
     try {
-      if (_playing) { await _player.pause(); setState(() => _playing = false); }
-      else { await _player.play(UrlSource(url)); setState(() => _playing = true); }
+      if (_playingUrl == url) { await _player.pause(); if (mounted) setState(() => _playingUrl = null); }
+      else { await _player.stop(); await _player.play(UrlSource(url)); if (mounted) setState(() => _playingUrl = url); }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
@@ -322,7 +321,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       if (items.isNotEmpty) {
         await Api.placeOrder(items: items.map<Map<String, dynamic>>((it) => {'skuId': it['skuId'], 'qty': it['qty']}).toList());
       } else {
-        await Api.placeOrder(rawText: o['rawText'] as String?, mediaUrl: o['mediaUrl'] as String?);
+        final urls = ((o['media'] as List?) ?? []).map<String>((m) => m['url'] as String).toList();
+        await Api.placeOrder(rawText: o['rawText'] as String?, mediaUrls: urls);
       }
       if (mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('reordered')))); Navigator.of(context).pop(); }
     } catch (e) {
@@ -333,8 +333,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final o = widget.order;
-    final mediaUrl = o['mediaUrl'] as String?;
-    final fullUrl = (mediaUrl != null && mediaUrl.startsWith('/media')) ? '${Api.base}$mediaUrl' : null;
+    final media = (o['media'] as List?) ?? [];
     final items = (o['items'] as List?) ?? [];
     final payment = o['payment'] as Map?;
     final total = (o['total'] ?? 0) as int;
@@ -349,21 +348,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ]),
         if (o['rawText'] != null) Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text('“${o['rawText']}”', style: const TextStyle(fontSize: 16))),
 
-        // Attached media
-        if (fullUrl != null && _isImage(fullUrl)) ...[
-          const SizedBox(height: 8),
-          ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(fullUrl, height: 240, fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => const Text('Could not load photo'))),
-        ],
-        if (fullUrl != null && _isAudio(fullUrl)) ...[
-          const SizedBox(height: 8),
-          Card(child: ListTile(
-            leading: Icon(_playing ? Icons.pause_circle : Icons.play_circle, color: green, size: 40),
-            title: Text(t('voiceLabel')),
-            subtitle: Text(_playing ? t('pause') : t('play')),
-            onTap: () => _togglePlay(fullUrl),
-          )),
-        ],
+        // Attached media (photos + voice notes)
+        ...media.map<Widget>((m) {
+          final url = '${Api.base}${m['url']}';
+          if (m['kind'] == 'photo') {
+            return Padding(padding: const EdgeInsets.only(top: 8),
+              child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(url, height: 240, fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const Text('Could not load photo'))));
+          }
+          if (m['kind'] == 'voice') {
+            final playing = _playingUrl == url;
+            return Padding(padding: const EdgeInsets.only(top: 8), child: Card(child: ListTile(
+              leading: Icon(playing ? Icons.pause_circle : Icons.play_circle, color: green, size: 40),
+              title: Text(t('voiceLabel')),
+              subtitle: Text(playing ? t('pause') : t('play')),
+              onTap: () => _togglePlay(url),
+            )));
+          }
+          return const SizedBox.shrink();
+        }),
 
         if (items.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -401,9 +404,7 @@ class NewOrderTab extends StatefulWidget {
 class _NewOrderTabState extends State<NewOrderTab> {
   final _text = TextEditingController();
   final _recorder = AudioRecorder();
-  List<int>? _bytes; // attachment bytes
-  String? _attachName;
-  String? _attachKind; // 'photo' | 'voice'
+  final List<({List<int> bytes, String name, String kind})> _attachments = [];
   bool _recording = false;
   String _msg = '';
   String _err = '';
@@ -418,8 +419,8 @@ class _NewOrderTabState extends State<NewOrderTab> {
       final XFile? img = await ImagePicker().pickImage(source: source, imageQuality: 70, maxWidth: 1600);
       if (img == null) return;
       final b = await img.readAsBytes();
-      setState(() { _bytes = b; _attachName = img.name; _attachKind = 'photo'; });
-    } catch (e) { setState(() => _err = '$e'); }
+      if (mounted) setState(() => _attachments.add((bytes: b, name: img.name, kind: 'photo')));
+    } catch (e) { if (mounted) setState(() => _err = '$e'); }
   }
 
   Future<void> _toggleRecord() async {
@@ -427,32 +428,30 @@ class _NewOrderTabState extends State<NewOrderTab> {
     try {
       if (_recording) {
         final out = await _recorder.stop();
-        setState(() => _recording = false);
+        if (mounted) setState(() => _recording = false);
         if (out != null) {
           final b = await XFile(out).readAsBytes();
-          setState(() { _bytes = b; _attachName = 'voice.m4a'; _attachKind = 'voice'; });
+          if (mounted) setState(() => _attachments.add((bytes: b, name: 'voice_${DateTime.now().millisecondsSinceEpoch}.m4a', kind: 'voice')));
         }
       } else {
-        if (!await _recorder.hasPermission()) { setState(() => _err = t('micDenied')); return; }
+        if (!await _recorder.hasPermission()) { if (mounted) setState(() => _err = t('micDenied')); return; }
         String path = '';
         if (!kIsWeb) { final dir = await getTemporaryDirectory(); path = '${dir.path}/order_${DateTime.now().millisecondsSinceEpoch}.m4a'; }
         await _recorder.start(const RecordConfig(), path: path);
-        setState(() { _recording = true; });
+        if (mounted) setState(() { _recording = true; });
       }
-    } catch (e) { setState(() { _err = '$e'; _recording = false; }); }
+    } catch (e) { if (mounted) setState(() { _err = '$e'; _recording = false; }); }
   }
-
-  void _clearAttach() => setState(() { _bytes = null; _attachName = null; _attachKind = null; });
 
   Future<void> _send() async {
     setState(() { _msg = ''; _err = ''; _busy = true; });
     try {
-      String? mediaUrl;
-      if (_bytes != null) mediaUrl = await Api.uploadMedia(_bytes!, _attachName ?? 'attachment');
       final text = _text.text.trim();
-      if (text.isEmpty && mediaUrl == null) { setState(() { _err = t('addSomething'); _busy = false; }); return; }
-      await Api.placeOrder(rawText: text.isEmpty ? null : text, mediaUrl: mediaUrl);
-      if (mounted) setState(() { _msg = t('orderSent'); _text.clear(); _clearAttach(); });
+      if (text.isEmpty && _attachments.isEmpty) { setState(() { _err = t('addSomething'); _busy = false; }); return; }
+      final urls = <String>[];
+      for (final a in _attachments) { urls.add(await Api.uploadMedia(a.bytes, a.name)); }
+      await Api.placeOrder(rawText: text.isEmpty ? null : text, mediaUrls: urls);
+      if (mounted) setState(() { _msg = t('orderSent'); _text.clear(); _attachments.clear(); });
     } catch (e) { if (mounted) setState(() => _err = '$e'); }
     finally { if (mounted) setState(() => _busy = false); }
   }
@@ -487,13 +486,13 @@ class _NewOrderTabState extends State<NewOrderTab> {
             label: Text(_recording ? t('stop') : t('voiceNote')),
           ),
         ]),
-        if (_attachName != null) Padding(
+        if (_attachments.isNotEmpty) Padding(
           padding: const EdgeInsets.only(top: 10),
-          child: Chip(
-            avatar: Icon(_attachKind == 'voice' ? Icons.mic : Icons.image, size: 18),
-            label: Text(_attachKind == 'voice' ? t('voiceAttached') : (_attachName ?? t('photo'))),
-            onDeleted: _clearAttach,
-          ),
+          child: Wrap(spacing: 8, runSpacing: 8, children: _attachments.asMap().entries.map((e) => Chip(
+            avatar: Icon(e.value.kind == 'voice' ? Icons.mic : Icons.image, size: 18),
+            label: Text(e.value.kind == 'voice' ? t('voiceAttached') : e.value.name),
+            onDeleted: () => setState(() => _attachments.removeAt(e.key)),
+          )).toList()),
         ),
         const SizedBox(height: 16),
         FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.send), label: Text(_busy ? t('sending') : t('sendOrder'))),

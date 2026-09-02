@@ -78,6 +78,7 @@ model Order {
   updatedAt    DateTime @updatedAt
 
   items           OrderItem[]
+  media           OrderMedia[]
   payment         Payment?
   delivery        Delivery?
   walletTxns      WalletTxn[]
@@ -86,6 +87,17 @@ model Order {
   @@index([shopId, status])
   @@index([shopId, createdAt])
   @@index([userId])
+}
+
+model OrderMedia {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  url       String // /media/<file>
+  kind      String // photo | voice | file
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model OrderItem {

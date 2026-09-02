@@ -2,6 +2,7 @@ import { Router, Request } from "express";
 import { createHmac, timingSafeEqual } from "crypto";
 import { db } from "../db";
 import { sendText, ACK_HINDI, downloadMedia } from "../lib/whatsapp";
+import { mediaKind } from "../lib/media";
 
 // PUBLIC endpoint — Meta calls this; it is NOT behind auth. Verified by a token on GET.
 export const webhook = Router();
@@ -94,7 +95,10 @@ webhook.post("/", async (req, res) => {
             if (phoneNumberId) await sendText(phoneNumberId, from, ACK_HINDI);
             if (mediaId) {
               const dl = await downloadMedia(mediaId);
-              if (dl) await db.order.update({ where: { id: order.id }, data: { mediaUrl: dl.publicUrl } });
+              if (dl) {
+                await db.order.update({ where: { id: order.id }, data: { mediaUrl: dl.publicUrl } });
+                await db.orderMedia.create({ data: { orderId: order.id, url: dl.publicUrl, kind: mediaKind(dl.publicUrl) } });
+              }
             }
           } catch (e) {
             console.error("[whatsapp] message handling error", (e as Error).message);
