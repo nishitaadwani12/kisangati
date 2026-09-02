@@ -59,7 +59,7 @@ const dict: Record<Lang, Record<string, string>> = {
     cashback: "Cashback", payoutLabel: "Payout", close: "Close", viewWallet: "Wallet",
 
     signIn: "Sign in", email: "Email", password: "Password", logout: "Log out",
-    show: "Show", hide: "Hide",
+    show: "Show", hide: "Hide", theme: "Theme",
     loginTagline: "Shop admin — sign in to manage orders", allShops: "All shops",
     "type.FARMER": "Farmer", "type.MISTRI": "Mistri",
     "status.RECEIVED": "RECEIVED", "status.QUOTED": "QUOTED", "status.PAID": "PAID",
@@ -121,7 +121,7 @@ const dict: Record<Lang, Record<string, string>> = {
     cashback: "कैशबैक", payoutLabel: "पेआउट", close: "बंद करें", viewWallet: "वॉलेट",
 
     signIn: "साइन इन", email: "ईमेल", password: "पासवर्ड", logout: "लॉग आउट",
-    show: "दिखाएँ", hide: "छिपाएँ",
+    show: "दिखाएँ", hide: "छिपाएँ", theme: "थीम",
     loginTagline: "शॉप एडमिन — ऑर्डर प्रबंधन के लिए साइन इन करें", allShops: "सभी शॉप",
     "type.FARMER": "किसान", "type.MISTRI": "मिस्त्री",
     "status.RECEIVED": "मिला", "status.QUOTED": "कोटेड", "status.PAID": "भुगतान",

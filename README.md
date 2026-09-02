@@ -81,6 +81,14 @@ with its test in the same change, so coverage never regresses and we never accum
 `test:cov` enforces the 100% gate; genuinely-unreachable defensive branches are marked with a justified
 `/* c8 ignore */` comment rather than left uncovered.
 
+## Theming
+Both surfaces share a 4-palette theme system with a **live switcher** (choice persists locally):
+**Kisan Modern** (default — emerald + harvest amber), **Harvest Earth** (terracotta), **Trust Indigo**
+(fintech), **Slate Dark**. Dashboard colors are CSS custom properties (`web/src/theme.tsx` +
+`styles.css`, switch via the palette dots in the sidebar / on login); the app mirrors them in
+`app/lib/theme.dart` (switch via the palette icon in the app bar / dots on login). Add a palette by
+adding one entry in each of those two files.
+
 ## Notes
 - Money is stored in **paise** (integers) everywhere; the UI displays rupees.
 - Secrets live in `.env` (gitignored). Never commit tokens or real shop data.

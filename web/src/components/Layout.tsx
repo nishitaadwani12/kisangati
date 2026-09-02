@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useI18n } from "../i18n";
 import { useAuth } from "../auth";
+import { ThemeSwitcher } from "../theme";
 
 const link = ({ isActive }: { isActive: boolean }) => (isActive ? "active" : "");
 
@@ -41,6 +42,7 @@ export function Layout() {
             <div className="shopname">{user?.shopName}</div>
           )}
           <div className="whoami">{user?.name || user?.email} · {user?.role}</div>
+          <ThemeSwitcher label={t("theme")} />
           <button className="secondary logout" onClick={logout}>{t("logout")}</button>
         </div>
       </aside>

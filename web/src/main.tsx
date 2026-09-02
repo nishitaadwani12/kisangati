@@ -2,7 +2,11 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./styles.css";
+import { applyTheme, getTheme } from "./theme";
 import { LangProvider } from "./i18n";
+
+// Apply the saved theme before first paint (avoids a flash of the default palette).
+applyTheme(getTheme());
 import { AuthProvider, useAuth } from "./auth";
 import { Layout } from "./components/Layout";
 import { Login } from "./pages/Login";

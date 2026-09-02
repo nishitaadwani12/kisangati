@@ -7,26 +7,14 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'api.dart';
 import 'i18n.dart';
+import 'theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Api.loadToken();
   await loadLang();
+  await loadTheme();
   runApp(const KisanGatiApp());
-}
-
-const green = Color(0xFF1F7A4D);
-
-Color _statusColor(String s) {
-  switch (s) {
-    case 'QUOTED': return const Color(0xFFB7791F);
-    case 'PAID': return const Color(0xFF0B6B53);
-    case 'PACKED': return const Color(0xFF1D4ED8);
-    case 'DISPATCHED': return const Color(0xFF6D28D9);
-    case 'DELIVERED': return green;
-    case 'CANCELLED': return const Color(0xFFB91C1C);
-    default: return const Color(0xFF6B7280); // RECEIVED / unknown
-  }
 }
 
 class StatusChip extends StatelessWidget {
@@ -34,7 +22,7 @@ class StatusChip extends StatelessWidget {
   const StatusChip(this.status, {super.key});
   @override
   Widget build(BuildContext context) {
-    final c = _statusColor(status);
+    final c = appTheme.value.statusColor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(color: c.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withValues(alpha: 0.4))),
@@ -50,14 +38,15 @@ class EmptyState extends StatelessWidget {
   const EmptyState({super.key, required this.icon, required this.title, this.hint});
   @override
   Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 56, color: Colors.black26),
+          Icon(icon, size: 56, color: onSurface.withValues(alpha: 0.22)),
           const SizedBox(height: 12),
-          Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54), textAlign: TextAlign.center),
-          if (hint != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(hint!, style: const TextStyle(color: Colors.black38), textAlign: TextAlign.center)),
+          Text(title, style: TextStyle(fontSize: 16, color: onSurface.withValues(alpha: 0.6)), textAlign: TextAlign.center),
+          if (hint != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(hint!, style: TextStyle(color: onSurface.withValues(alpha: 0.45)), textAlign: TextAlign.center)),
         ]),
       ),
     );
@@ -77,14 +66,17 @@ class _KisanGatiAppState extends State<KisanGatiApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Rebuild the whole app when the language changes.
-    return ValueListenableBuilder<String>(
-      valueListenable: appLang,
-      builder: (_, _, _) => MaterialApp(
-        title: 'KisanGati',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorSchemeSeed: green, useMaterial3: true),
-        home: loggedIn ? HomeScreen(onLogout: _refresh) : LoginScreen(onLoggedIn: _refresh),
+    // Rebuild the whole app when the language OR the theme changes.
+    return ValueListenableBuilder<AppPalette>(
+      valueListenable: appTheme,
+      builder: (_, palette, _) => ValueListenableBuilder<String>(
+        valueListenable: appLang,
+        builder: (_, _, _) => MaterialApp(
+          title: 'KisanGati',
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(palette),
+          home: loggedIn ? HomeScreen(onLogout: _refresh) : LoginScreen(onLoggedIn: _refresh),
+        ),
       ),
     );
   }
@@ -147,6 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -154,13 +147,13 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 380),
             child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Align(alignment: Alignment.centerRight, child: LangToggle(color: green)),
-              const Text('KisanGati', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: green)),
+              Align(alignment: Alignment.centerRight, child: LangToggle(color: cs.primary)),
+              Text('KisanGati', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: cs.primary)),
               const SizedBox(height: 4),
-              Text(t('tagline'), style: const TextStyle(color: Colors.black54)),
+              Text(t('tagline'), style: TextStyle(color: cs.onSurface.withValues(alpha: 0.6))),
               const SizedBox(height: 24),
-              if (_err.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_err, style: const TextStyle(color: Colors.red))),
-              if (_info.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_info, style: const TextStyle(color: green))),
+              if (_err.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_err, style: TextStyle(color: cs.error))),
+              if (_info.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_info, style: TextStyle(color: cs.primary))),
               DropdownButtonFormField<String>(
                 initialValue: _shopId,
                 decoration: InputDecoration(labelText: t('shop'), border: const OutlineInputBorder()),
@@ -180,6 +173,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 FilledButton(onPressed: _busy ? null : _verify, child: Text(t('verifySignIn'))),
               ],
+              const SizedBox(height: 28),
+              const ThemeDots(),
             ]),
           ),
         ),
@@ -225,15 +220,23 @@ class _HomeScreenState extends State<HomeScreen> {
       if (isMistri) const CatalogTab(),
       if (isMistri) const WalletTab(),
     ];
+    final onHeader = appTheme.value.onHeader;
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: green,
-          foregroundColor: Colors.white,
           title: Text('${_me!['shopName']} · ${_me!['name'] ?? _me!['phone']}'),
-          actions: [const LangToggle(), IconButton(onPressed: _logout, icon: const Icon(Icons.logout))],
-          bottom: TabBar(tabs: tabs, labelColor: Colors.white, indicatorColor: Colors.white),
+          actions: [
+            LangToggle(color: onHeader),
+            const ThemePaletteButton(),
+            IconButton(onPressed: _logout, icon: const Icon(Icons.logout)),
+          ],
+          bottom: TabBar(
+            tabs: tabs,
+            labelColor: onHeader,
+            unselectedLabelColor: onHeader.withValues(alpha: 0.7),
+            indicatorColor: onHeader,
+          ),
         ),
         body: TabBarView(children: views),
       ),
@@ -274,7 +277,7 @@ class _OrdersTabState extends State<OrdersTab> {
           final hasVoice = media.any((m) => m['kind'] == 'voice');
           final leadingIcon = media.isEmpty ? Icons.receipt_long : (hasVoice ? Icons.mic : Icons.image);
           return ListTile(
-            leading: Icon(leadingIcon, color: media.isEmpty ? Colors.black26 : green),
+            leading: Icon(leadingIcon, color: media.isEmpty ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25) : appTheme.value.seed),
             title: Text(o['rawText'] ?? t('nItems').replaceFirst('{n}', '${(o['items'] as List).length}')),
             subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Align(alignment: Alignment.centerLeft, child: StatusChip(o['status']))),
             trailing: Text(total > 0 ? rupees(total) : '—', style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -340,7 +343,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final total = (o['total'] ?? 0) as int;
 
     return Scaffold(
-      appBar: AppBar(backgroundColor: green, foregroundColor: Colors.white, title: Text('${t('orderTitle')} #${(o['id'] as String).substring((o['id'] as String).length - 6)}')),
+      appBar: AppBar(title: Text('${t('orderTitle')} #${(o['id'] as String).substring((o['id'] as String).length - 6)}')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Row(children: [
           StatusChip(o['status']),
@@ -360,7 +363,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           if (m['kind'] == 'voice') {
             final playing = _playingUrl == url;
             return Padding(padding: const EdgeInsets.only(top: 8), child: Card(child: ListTile(
-              leading: Icon(playing ? Icons.pause_circle : Icons.play_circle, color: green, size: 40),
+              leading: Icon(playing ? Icons.pause_circle : Icons.play_circle, color: appTheme.value.seed, size: 40),
               title: Text(t('voiceLabel')),
               subtitle: Text(playing ? t('pause') : t('play')),
               onTap: () => _togglePlay(url),
@@ -385,7 +388,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
         if (payment != null) Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: Text('${t('payment')}: ${payment['status']}', style: const TextStyle(color: Colors.black54)),
+          child: Text('${t('payment')}: ${payment['status']}', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
         ),
 
         const SizedBox(height: 24),
@@ -481,24 +484,26 @@ class _NewOrderTabState extends State<NewOrderTab> {
 
   @override
   Widget build(BuildContext context) {
+    final pal = appTheme.value;
+    final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Container(
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(color: const Color(0xFFE6F6F0), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: pal.tint, borderRadius: BorderRadius.circular(10)),
           child: Row(children: [
-            const Icon(Icons.info_outline, color: green),
+            Icon(Icons.info_outline, color: pal.seed),
             const SizedBox(width: 10),
-            Expanded(child: Text(t('newOrderHint'), style: const TextStyle(color: Colors.black87))),
+            Expanded(child: Text(t('newOrderHint'), style: TextStyle(color: cs.onSurface.withValues(alpha: 0.85)))),
           ]),
         ),
         Text(t('describePart'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(controller: _text, maxLines: 3, decoration: InputDecoration(hintText: t('hintPart'), border: const OutlineInputBorder())),
         const SizedBox(height: 12),
-        Text(t('orAttach'), style: const TextStyle(color: Colors.black54)),
+        Text(t('orAttach'), style: TextStyle(color: cs.onSurface.withValues(alpha: 0.6))),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
           if (!kIsWeb) OutlinedButton.icon(onPressed: _busy ? null : () => _pickPhoto(ImageSource.camera), icon: const Icon(Icons.photo_camera), label: Text(t('camera'))),
@@ -527,8 +532,8 @@ class _NewOrderTabState extends State<NewOrderTab> {
         ),
         const SizedBox(height: 16),
         FilledButton.icon(onPressed: _busy ? null : _send, icon: const Icon(Icons.send), label: Text(_busy ? t('sending') : t('sendOrder'))),
-        if (_msg.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_msg, style: const TextStyle(color: green))),
-        if (_err.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_err, style: const TextStyle(color: Colors.red))),
+        if (_msg.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_msg, style: TextStyle(color: pal.seed))),
+        if (_err.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Text(_err, style: TextStyle(color: cs.error))),
       ]),
     );
   }
@@ -631,14 +636,16 @@ class _WalletTabState extends State<WalletTab> {
     if (_err.isNotEmpty) return Center(child: Text(_err));
     if (_w == null) return const Center(child: CircularProgressIndicator());
     final txns = _w!['txns'] as List;
+    final pal = appTheme.value;
+    final cs = Theme.of(context).colorScheme;
     return Column(children: [
       Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
-        color: const Color(0xFFE6F6F0),
+        color: pal.tint,
         child: Column(children: [
-          Text(t('cashbackBalance'), style: const TextStyle(color: Colors.black54)),
-          Text(rupees(_w!['balance']), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: green)),
+          Text(t('cashbackBalance'), style: TextStyle(color: cs.onSurface.withValues(alpha: 0.6))),
+          Text(rupees(_w!['balance']), style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: pal.seed)),
         ]),
       ),
       Expanded(child: txns.isEmpty

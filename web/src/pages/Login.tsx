@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
+import { ThemeSwitcher } from "../theme";
 
 export function Login() {
   const { login } = useAuth();
@@ -26,7 +27,7 @@ export function Login() {
           <button type="button" className={lang === "hi" ? "on" : ""} onClick={() => setLang("hi")}>हिं</button>
           <button type="button" className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
         </div>
-        <h1 style={{ margin: "0 0 2px", color: "#1f7a4d" }}>KisanGati</h1>
+        <h1 className="brand-title">KisanGati</h1>
         <p className="muted" style={{ marginTop: 0 }}>{t("loginTagline")}</p>
         {err && <div className="err">{err}</div>}
         <div className="field" style={{ marginBottom: 10 }}>
@@ -43,6 +44,7 @@ export function Login() {
           </div>
         </div>
         <button type="submit" disabled={busy || !email || !password} style={{ width: "100%" }}>{t("signIn")}</button>
+        <ThemeSwitcher variant="login" />
       </form>
     </div>
   );
